@@ -1,0 +1,73 @@
+# Kotlin
+*.log
+*.hprof
+*.orig
+*.out
+.kotlin
+!src/**/build/
+
+# Gradle
+.gradle/
+build/
+.gradle
+**/build/
+**/.gradle/*
+*/out/*
+*/target/*
+.libsfw
+
+# Kotlin/JS specific files
+node_modules/
+yarn.lock
+package-lock.json
+
+# Android specific files
+.DS_Store
+*.apk
+*.ap_
+*.dex
+*.class
+*.so
+*.obj
+*.o
+*.a
+*.jar
+*.war
+*.ear
+*.db
+*.lock
+*.apks
+*.keystore
+*.jks
+*.bak
+
+# Android Studio specific files
+.cxx/
+.externalNativeBuild/
+
+# Built application files
+*.aab
+
+# JetBrains IDEs
+.idea
+.idea/*
+*/.idea/*
+!.idea/codeStyles
+.idea_modules/
+out/
+
+# xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings
+
+# other
+*.iml
+xcuserdata
+local.properties
+captures
+.externalNativeBuild
+.cxx
