@@ -8,3 +8,21 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.kotlinx.serialization) apply false
 }
+
+tasks.register("runLocal") {
+    group = "application"
+    description = "Alias for :composeApp:runLocal"
+    dependsOn(":composeApp:runLocal")
+}
+
+tasks.register("runStaging") {
+    group = "application"
+    description = "Alias for :composeApp:runStaging"
+    dependsOn(":composeApp:runStaging")
+}
+
+tasks.register("runProd") {
+    group = "application"
+    description = "Alias for :composeApp:runProd"
+    dependsOn(":composeApp:runProd")
+}

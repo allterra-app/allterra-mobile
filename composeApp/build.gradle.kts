@@ -1,3 +1,4 @@
+import org.gradle.api.GradleException
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -9,6 +10,30 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
+val requestedTasks = gradle.startParameter.taskNames
+val envFromTask = when {
+    requestedTasks.any { it.endsWith("runStaging") || it.contains(":runStaging") } -> "STAGING"
+    requestedTasks.any { it.endsWith("runProd") || it.contains(":runProd") } -> "PRODUCTION"
+    requestedTasks.any { it.endsWith("runLocal") || it.contains(":runLocal") } -> "LOCAL"
+    else -> null
+}
+
+val appEnv = providers.gradleProperty("APP_ENV")
+    .orElse(providers.environmentVariable("APP_ENV"))
+    .orElse(envFromTask ?: "LOCAL")
+    .get()
+
+val appBaseUrl = providers.gradleProperty("APP_BASE_URL")
+    .orElse(providers.environmentVariable("APP_BASE_URL"))
+    .orElse("")
+    .get()
+
+if (appEnv.equals("STAGING", ignoreCase = true) || appEnv.equals("PRODUCTION", ignoreCase = true)) {
+    if (appBaseUrl.isBlank()) {
+        throw GradleException("APP_BASE_URL is required when APP_ENV is STAGING or PRODUCTION")
+    }
+}
+
 kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -16,7 +41,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -27,14 +52,12 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     sourceSets {
         commonMain.dependencies {
-            //base
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.ui.text.google.fonts)
 
-            //compose
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material)
@@ -44,7 +67,6 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.runtime.compose)
 
-            //ktor
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.cio)
             implementation(libs.ktor.client.content.negotiation)
@@ -53,7 +75,6 @@ kotlin {
             implementation(libs.ktor.client.logging)
             implementation(libs.ktor.serialization.kotlinx.json)
 
-            //koin
             api(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
@@ -81,12 +102,19 @@ android {
     namespace = "com.allterra"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.allterra"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField("String", "APP_ENV", "\"$appEnv\"")
+        buildConfigField("String", "APP_BASE_URL", "\"$appBaseUrl\"")
     }
     packaging {
         resources {
@@ -104,7 +132,24 @@ android {
     }
 }
 
+tasks.register("runLocal") {
+    group = "application"
+    description = "Assemble Android debug build with LOCAL environment"
+    dependsOn("assembleDebug")
+}
+
+tasks.register("runStaging") {
+    group = "application"
+    description = "Assemble Android debug build with STAGING environment (requires APP_BASE_URL)"
+    dependsOn("assembleDebug")
+}
+
+tasks.register("runProd") {
+    group = "application"
+    description = "Assemble Android release build with PRODUCTION environment (requires APP_BASE_URL)"
+    dependsOn("assembleRelease")
+}
+
 dependencies {
     debugImplementation(compose.uiTooling)
 }
-
