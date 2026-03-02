@@ -104,7 +104,7 @@ private class FakePoisRepository : PoisRepository {
         localPhotoPaths: List<String>,
     ): ApiResult<PoiUiModel> {
         val item = PoiUiModel(
-            id = "poi_${items.size + 1}",
+            id = "poi_",
             title = name,
             type = type,
             photoUris = localPhotoPaths,
@@ -113,5 +113,10 @@ private class FakePoisRepository : PoisRepository {
         )
         items.add(item)
         return ApiResult.Success(item)
+    }
+
+    override suspend fun deleteMyPoi(poiId: String): ApiResult<Unit> {
+        items.removeAll { it.id == poiId }
+        return ApiResult.Success(Unit)
     }
 }

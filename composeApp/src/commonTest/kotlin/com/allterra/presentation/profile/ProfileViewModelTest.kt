@@ -119,7 +119,7 @@ private class FakePostsRepository(
         selectedPoiIds: List<String>,
     ): ApiResult<ActivityUiModel> {
         val created = ActivityUiModel(
-            id = "post_${feedPosts.size + 1}",
+            id = "post_",
             title = title,
             description = description,
             author = "Tester",
@@ -131,6 +131,11 @@ private class FakePostsRepository(
         )
         feedPosts.add(0, created)
         return ApiResult.Success(created)
+    }
+
+    override suspend fun deleteMyPost(postId: String): ApiResult<Unit> {
+        feedPosts.removeAll { it.id == postId }
+        return ApiResult.Success(Unit)
     }
 }
 

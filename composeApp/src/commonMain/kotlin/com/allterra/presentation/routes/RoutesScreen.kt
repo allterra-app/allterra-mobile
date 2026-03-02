@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.allterra.presentation.common.components.list.SwipeToDeleteItem
 import com.allterra.presentation.localization.appStrings
 
 @Composable
@@ -105,46 +106,56 @@ fun RoutesScreen(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 items(state.items, key = { it.id }) { item ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(Color(0xFF2D8A8E))
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = item.title,
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                if (item.description.isNotBlank()) {
+                    SwipeToDeleteItem(
+                        enabled = item.id !in state.deletingIds,
+                        deleteLabel = strings.deleteAction,
+                            confirmTitle = strings.deleteConfirmTitle,
+                            confirmMessage = strings.deleteConfirmMessage,
+                            confirmActionLabel = strings.deleteAction,
+                            cancelActionLabel = strings.cancelAction,
+                            onDelete = { viewModel.deleteRoute(item.id) },
+                    ) {
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF2D8A8E))
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = item.description,
-                                        color = Color.White.copy(alpha = 0.88f),
+                                        text = item.title,
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    if (item.description.isNotBlank()) {
+                                        Text(
+                                            text = item.description,
+                                            color = Color.White.copy(alpha = 0.88f),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            maxLines = 2,
+                                        )
+                                    }
+                                    Text(
+                                        text = listOfNotNull(
+                                            item.date,
+                                            item.distanceKm?.let { "${it} km" },
+                                            item.durationMinutes?.let { "${it} min" },
+                                        ).joinToString("  •  "),
+                                        color = Color.White.copy(alpha = 0.78f),
                                         style = MaterialTheme.typography.bodySmall,
-                                        maxLines = 2,
                                     )
                                 }
-                                Text(
-                                    text = listOfNotNull(
-                                        item.date,
-                                        item.distanceKm?.let { "${it} km" },
-                                        item.durationMinutes?.let { "${it} min" },
-                                    ).joinToString("  •  "),
-                                    color = Color.White.copy(alpha = 0.78f),
-                                    style = MaterialTheme.typography.bodySmall,
+                                RoutePreviewCanvas(
+                                    points = item.previewPoints,
+                                    modifier = Modifier
+                                        .padding(start = 10.dp)
+                                        .size(width = 96.dp, height = 66.dp),
                                 )
                             }
-                            RoutePreviewCanvas(
-                                points = item.previewPoints,
-                                modifier = Modifier
-                                    .padding(start = 10.dp)
-                                    .size(width = 96.dp, height = 66.dp),
-                            )
                         }
                     }
                 }

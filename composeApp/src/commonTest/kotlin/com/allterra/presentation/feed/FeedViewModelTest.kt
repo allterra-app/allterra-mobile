@@ -68,6 +68,8 @@ private class FakePostsRepository(
         selectedRouteId: String?,
         selectedPoiIds: List<String>,
     ): ApiResult<ActivityUiModel> = ApiResult.UnknownError("Not used")
+
+    override suspend fun deleteMyPost(postId: String): ApiResult<Unit> = ApiResult.UnknownError("Not used")
 }
 
 private fun testActivity() = ActivityUiModel(

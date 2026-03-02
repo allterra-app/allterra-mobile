@@ -14,4 +14,5 @@ interface PostsRepository {
         selectedRouteId: String?,
         selectedPoiIds: List<String>,
     ): ApiResult<ActivityUiModel>
+    suspend fun deleteMyPost(postId: String): ApiResult<Unit>
 }

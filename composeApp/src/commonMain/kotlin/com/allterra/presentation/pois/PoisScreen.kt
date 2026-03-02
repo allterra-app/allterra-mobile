@@ -55,6 +55,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.allterra.presentation.common.components.list.SwipeToDeleteItem
 import com.allterra.presentation.common.model.PoiType
 import com.allterra.presentation.localization.AppStrings
 import com.allterra.presentation.localization.appStrings
@@ -117,6 +118,14 @@ fun PoisScreen(
                     )
                 }
 
+                state.createError?.let { message ->
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    )
+                }
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -124,52 +133,62 @@ fun PoisScreen(
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     items(state.items, key = { it.id }) { item ->
-                        Card(modifier = Modifier.fillMaxWidth()) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(Color(0xFF2D8A8E))
-                                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(item.title, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                                    Text(
-                                        text = "${poiTypeLabel(item.type, strings)}  •  ${item.photoUris.size} ${strings.photosLabel}",
-                                        color = Color.White.copy(alpha = 0.82f),
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                    Text(
-                                        text = "${strings.addedLabel}: ${item.addedAt}   ${strings.updatedLabel}: ${item.updatedAt}",
-                                        color = Color.White.copy(alpha = 0.78f),
-                                        style = MaterialTheme.typography.bodySmall,
-                                    )
-                                }
-                                if (item.photoUris.isNotEmpty()) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(54.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .clickable { previewPhoto = item.photoUris.first() },
-                                    ) {
-                                        PoiPhotoImage(
-                                            source = item.photoUris.first(),
-                                            modifier = Modifier.fillMaxSize(),
+                        SwipeToDeleteItem(
+                            enabled = item.id !in state.deletingIds,
+                            deleteLabel = strings.deleteAction,
+                            confirmTitle = strings.deleteConfirmTitle,
+                            confirmMessage = strings.deleteConfirmMessage,
+                            confirmActionLabel = strings.deleteAction,
+                            cancelActionLabel = strings.cancelAction,
+                            onDelete = { viewModel.deletePoi(item.id) },
+                        ) {
+                            Card(modifier = Modifier.fillMaxWidth()) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFF2D8A8E))
+                                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(item.title, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                                        Text(
+                                            text = "${poiTypeLabel(item.type, strings)}  •  ${item.photoUris.size} ${strings.photosLabel}",
+                                            color = Color.White.copy(alpha = 0.82f),
+                                            style = MaterialTheme.typography.bodySmall,
+                                        )
+                                        Text(
+                                            text = "${strings.addedLabel}: ${item.addedAt}   ${strings.updatedLabel}: ${item.updatedAt}",
+                                            color = Color.White.copy(alpha = 0.78f),
+                                            style = MaterialTheme.typography.bodySmall,
                                         )
                                     }
-                                } else {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .background(Color(0xFF1E7D84), CircleShape),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Outlined.LocationOn,
-                                            contentDescription = null,
-                                            tint = Color(0xFFEAF5F6),
-                                        )
+                                    if (item.photoUris.isNotEmpty()) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(54.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .clickable { previewPhoto = item.photoUris.first() },
+                                        ) {
+                                            PoiPhotoImage(
+                                                source = item.photoUris.first(),
+                                                modifier = Modifier.fillMaxSize(),
+                                            )
+                                        }
+                                    } else {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(44.dp)
+                                                .background(Color(0xFF1E7D84), CircleShape),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.LocationOn,
+                                                contentDescription = null,
+                                                tint = Color(0xFFEAF5F6),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -420,6 +439,8 @@ private fun PhotoPreviewDialog(
     )
 }
 
+private const val MAX_POI_PHOTOS = 5
+
 private fun poiTypeLabel(type: PoiType, strings: AppStrings): String {
     return when (type) {
         PoiType.SHOP -> strings.poiTypeShop
@@ -429,5 +450,3 @@ private fun poiTypeLabel(type: PoiType, strings: AppStrings): String {
         PoiType.OTHER -> strings.poiTypeOther
     }
 }
-
-private const val MAX_POI_PHOTOS = 5

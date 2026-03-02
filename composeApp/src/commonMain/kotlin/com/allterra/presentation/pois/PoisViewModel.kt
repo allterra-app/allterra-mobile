@@ -29,6 +29,7 @@ data class PoisUiState(
     val isCreateOpen: Boolean = false,
     val createDraft: PoiCreateDraft = PoiCreateDraft(),
     val createError: String? = null,
+    val deletingIds: Set<String> = emptySet(),
 )
 
 class PoisViewModel(
@@ -139,6 +140,30 @@ class PoisViewModel(
 
                 else -> _state.update {
                     it.copy(isSaving = false, createError = result.message())
+                }
+            }
+        }
+    }
+
+    fun deletePoi(poiId: String) {
+        val currentState = _state.value
+        if (poiId in currentState.deletingIds) return
+
+        scope.launch {
+            _state.update { it.copy(deletingIds = it.deletingIds + poiId, createError = null) }
+            when (val result = poisRepository.deleteMyPoi(poiId)) {
+                is ApiResult.Success -> _state.update {
+                    it.copy(
+                        deletingIds = it.deletingIds - poiId,
+                        items = it.items.filterNot { item -> item.id == poiId },
+                    )
+                }
+
+                else -> _state.update {
+                    it.copy(
+                        deletingIds = it.deletingIds - poiId,
+                        createError = result.message(),
+                    )
                 }
             }
         }

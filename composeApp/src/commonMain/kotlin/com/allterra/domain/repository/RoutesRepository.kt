@@ -12,4 +12,5 @@ interface RoutesRepository {
         gpxContent: String,
         metrics: RouteGpxMetrics,
     ): ApiResult<RouteUiModel>
+    suspend fun deleteMyRoute(routeId: String): ApiResult<Unit>
 }

@@ -30,6 +30,7 @@ data class RoutesUiState(
     val createDraft: RouteCreateDraft = RouteCreateDraft(),
     val createMetrics: RouteGpxMetrics? = null,
     val createError: String? = null,
+    val deletingIds: Set<String> = emptySet(),
 )
 
 class RoutesViewModel(
@@ -142,6 +143,30 @@ class RoutesViewModel(
 
                 else -> _state.update {
                     it.copy(isSaving = false, createError = result.message())
+                }
+            }
+        }
+    }
+
+    fun deleteRoute(routeId: String) {
+        val currentState = _state.value
+        if (routeId in currentState.deletingIds) return
+
+        scope.launch {
+            _state.update { it.copy(deletingIds = it.deletingIds + routeId, createError = null) }
+            when (val result = routesRepository.deleteMyRoute(routeId)) {
+                is ApiResult.Success -> _state.update {
+                    it.copy(
+                        deletingIds = it.deletingIds - routeId,
+                        items = it.items.filterNot { item -> item.id == routeId },
+                    )
+                }
+
+                else -> _state.update {
+                    it.copy(
+                        deletingIds = it.deletingIds - routeId,
+                        createError = result.message(),
+                    )
                 }
             }
         }

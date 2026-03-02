@@ -40,6 +40,7 @@ data class ProfileUiState(
     val isCreatePostOpen: Boolean = false,
     val postCreateDraft: PostCreateDraft = PostCreateDraft(),
     val postCreateError: String? = null,
+    val deletingPostIds: Set<String> = emptySet(),
 )
 
 class ProfileViewModel(
@@ -214,6 +215,30 @@ class ProfileViewModel(
         }
 
         return true
+    }
+
+    fun deletePost(postId: String) {
+        val currentState = _state.value
+        if (postId in currentState.deletingPostIds) return
+
+        scope.launch {
+            _state.update { it.copy(deletingPostIds = it.deletingPostIds + postId, postCreateError = null) }
+            when (val result = postsRepository.deleteMyPost(postId)) {
+                is ApiResult.Success -> _state.update {
+                    it.copy(
+                        deletingPostIds = it.deletingPostIds - postId,
+                        activities = it.activities.filterNot { item -> item.id == postId },
+                    )
+                }
+
+                else -> _state.update {
+                    it.copy(
+                        deletingPostIds = it.deletingPostIds - postId,
+                        postCreateError = result.message(),
+                    )
+                }
+            }
+        }
     }
 
     override fun onCleared() {

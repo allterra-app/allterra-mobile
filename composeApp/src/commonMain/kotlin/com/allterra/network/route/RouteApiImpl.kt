@@ -7,6 +7,7 @@ import com.allterra.network.mapErrorResponse
 import com.allterra.network.mapThrowableToApiResult
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -52,6 +53,24 @@ class RouteApiImpl(
             }
             if (response.status.isSuccess()) {
                 ApiResult.Success(response.body<RouteDto>())
+            } else {
+                mapErrorResponse(response.status.value, response.bodyAsText())
+            }
+        } catch (exception: Throwable) {
+            mapThrowableToApiResult(exception)
+        }
+    }
+
+    override suspend fun deleteForUser(userId: String, routeId: String): ApiResult<Unit> {
+        val accessToken = tokenStorage.getAccessToken()
+            ?: return ApiResult.Unauthorized("Missing access token")
+
+        return try {
+            val response = httpClient.delete("${AppConfig.baseUrl}/routes/users/$userId/$routeId") {
+                header(HttpHeaders.Authorization, "Bearer $accessToken")
+            }
+            if (response.status.isSuccess()) {
+                ApiResult.Success(Unit)
             } else {
                 mapErrorResponse(response.status.value, response.bodyAsText())
             }

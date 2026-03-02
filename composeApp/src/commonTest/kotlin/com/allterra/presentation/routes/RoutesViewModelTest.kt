@@ -90,7 +90,7 @@ private class FakeRoutesRepository : RoutesRepository {
         metrics: RouteGpxMetrics,
     ): ApiResult<RouteUiModel> {
         val route = RouteUiModel(
-            id = "r${items.size + 1}",
+            id = "r",
             title = title,
             description = description,
             date = "01.01.2026",
@@ -102,6 +102,11 @@ private class FakeRoutesRepository : RoutesRepository {
         )
         items.add(0, route)
         return ApiResult.Success(route)
+    }
+
+    override suspend fun deleteMyRoute(routeId: String): ApiResult<Unit> {
+        items.removeAll { it.id == routeId }
+        return ApiResult.Success(Unit)
     }
 }
 

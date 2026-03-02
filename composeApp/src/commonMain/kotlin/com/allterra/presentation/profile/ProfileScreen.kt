@@ -60,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.allterra.presentation.common.components.cards.ActivityCard
+import com.allterra.presentation.common.components.list.SwipeToDeleteItem
 import com.allterra.presentation.common.model.PoiUiModel
 import com.allterra.presentation.common.model.RouteUiModel
 import com.allterra.presentation.localization.appStrings
@@ -215,19 +216,37 @@ fun ProfileScreen(
                 }
             }
 
+            state.postCreateError?.let { message ->
+                Text(
+                    text = message,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                )
+            }
+
             if (state.feedLayout == ProfileFeedLayout.LIST) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(state.activities, key = { it.id }) { item ->
-                        ActivityCard(
-                            item = item,
-                            strings = strings,
-                            onToggleLike = viewModel::toggleLike,
-                            onToggleBookmark = viewModel::toggleBookmark,
-                            onOpen = {},
-                        )
+                        SwipeToDeleteItem(
+                            enabled = item.id !in state.deletingPostIds,
+                            deleteLabel = strings.deleteAction,
+                            confirmTitle = strings.deleteConfirmTitle,
+                            confirmMessage = strings.deleteConfirmMessage,
+                            confirmActionLabel = strings.deleteAction,
+                            cancelActionLabel = strings.cancelAction,
+                            onDelete = { viewModel.deletePost(item.id) },
+                        ) {
+                            ActivityCard(
+                                item = item,
+                                strings = strings,
+                                onToggleLike = viewModel::toggleLike,
+                                onToggleBookmark = viewModel::toggleBookmark,
+                                onOpen = {},
+                            )
+                        }
                     }
                 }
             } else {
@@ -238,18 +257,28 @@ fun ProfileScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     gridItems(state.activities, key = { it.id }) { item ->
-                        Card(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = item.title,
-                                modifier = Modifier.padding(8.dp),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text(
-                                text = item.description,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                maxLines = 4,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
+                        SwipeToDeleteItem(
+                            enabled = item.id !in state.deletingPostIds,
+                            deleteLabel = strings.deleteAction,
+                            confirmTitle = strings.deleteConfirmTitle,
+                            confirmMessage = strings.deleteConfirmMessage,
+                            confirmActionLabel = strings.deleteAction,
+                            cancelActionLabel = strings.cancelAction,
+                            onDelete = { viewModel.deletePost(item.id) },
+                        ) {
+                            Card(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = item.title,
+                                    modifier = Modifier.padding(8.dp),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                Text(
+                                    text = item.description,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                    maxLines = 4,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
                         }
                     }
                 }

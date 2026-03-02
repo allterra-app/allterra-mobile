@@ -11,4 +11,5 @@ interface PoisRepository {
         type: PoiType,
         localPhotoPaths: List<String>,
     ): ApiResult<PoiUiModel>
+    suspend fun deleteMyPoi(poiId: String): ApiResult<Unit>
 }

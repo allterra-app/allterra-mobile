@@ -77,6 +77,30 @@ class RoutesRepositoryImpl(
             is ApiResult.UnknownError -> ApiResult.UnknownError(createResult.message)
         }
     }
+
+    override suspend fun deleteMyRoute(routeId: String): ApiResult<Unit> {
+        val me = when (val meResult = userApi.me()) {
+            is ApiResult.Success -> meResult.data
+            is ApiResult.ValidationError -> return ApiResult.ValidationError(meResult.message, meResult.fields)
+            is ApiResult.Unauthorized -> return ApiResult.Unauthorized(meResult.message)
+            is ApiResult.Forbidden -> return ApiResult.Forbidden(meResult.message)
+            is ApiResult.NotFound -> return ApiResult.NotFound(meResult.message)
+            is ApiResult.ServerError -> return ApiResult.ServerError(meResult.message)
+            is ApiResult.NetworkError -> return ApiResult.NetworkError(meResult.message)
+            is ApiResult.UnknownError -> return ApiResult.UnknownError(meResult.message)
+        }
+
+        return when (val deleteResult = routeApi.deleteForUser(me.id, routeId)) {
+            is ApiResult.Success -> ApiResult.Success(Unit)
+            is ApiResult.ValidationError -> ApiResult.ValidationError(deleteResult.message, deleteResult.fields)
+            is ApiResult.Unauthorized -> ApiResult.Unauthorized(deleteResult.message)
+            is ApiResult.Forbidden -> ApiResult.Forbidden(deleteResult.message)
+            is ApiResult.NotFound -> ApiResult.NotFound(deleteResult.message)
+            is ApiResult.ServerError -> ApiResult.ServerError(deleteResult.message)
+            is ApiResult.NetworkError -> ApiResult.NetworkError(deleteResult.message)
+            is ApiResult.UnknownError -> ApiResult.UnknownError(deleteResult.message)
+        }
+    }
 }
 
 private fun RouteDto.toUiModel(): RouteUiModel {
