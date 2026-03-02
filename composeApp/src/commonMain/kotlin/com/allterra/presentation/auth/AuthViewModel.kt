@@ -7,8 +7,11 @@ import com.allterra.core.ui.UiState
 import com.allterra.domain.model.AuthTokens
 import com.allterra.domain.usecase.LoginUseCase
 import com.allterra.domain.usecase.RegisterUseCase
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -19,11 +22,15 @@ enum class AuthMode {
 }
 
 data class AuthFormState(
-    val mode: AuthMode = AuthMode.Login,
+    val name: String = "",
     val email: String = "",
     val password: String = "",
     val uiState: UiState<AuthTokens> = UiState.Idle,
 )
+
+sealed interface AuthEvent {
+    data object Authorized : AuthEvent
+}
 
 class AuthViewModel(
     private val loginUseCase: LoginUseCase,
@@ -33,33 +40,40 @@ class AuthViewModel(
     private val _state = MutableStateFlow(AuthFormState())
     val state: StateFlow<AuthFormState> = _state.asStateFlow()
 
+    private val _events = MutableSharedFlow<AuthEvent>(extraBufferCapacity = 1)
+    val events: SharedFlow<AuthEvent> = _events.asSharedFlow()
+
     fun onEmailChanged(value: String) {
         _state.update { it.copy(email = value) }
+    }
+
+    fun onNameChanged(value: String) {
+        _state.update { it.copy(name = value) }
     }
 
     fun onPasswordChanged(value: String) {
         _state.update { it.copy(password = value) }
     }
 
-    fun onModeChanged(mode: AuthMode) {
-        _state.update { it.copy(mode = mode, uiState = UiState.Idle) }
-    }
-
-    fun submit() {
+    fun submit(mode: AuthMode, validationMessage: String) {
         val snapshot = state.value
-        if (snapshot.email.isBlank() || snapshot.password.isBlank()) {
-            _state.update { it.copy(uiState = UiState.Error("Email and password are required")) }
+        val missingCredentials = snapshot.email.isBlank() || snapshot.password.isBlank()
+        val missingName = mode == AuthMode.Register && snapshot.name.isBlank()
+        if (missingCredentials || missingName) {
+            _state.update { it.copy(uiState = UiState.Error(validationMessage)) }
             return
         }
 
         viewModelScope.launch {
             _state.update { it.copy(uiState = UiState.Loading) }
-            val result = when (snapshot.mode) {
+            val result = when (mode) {
                 AuthMode.Login -> loginUseCase(snapshot.email, snapshot.password)
                 AuthMode.Register -> registerUseCase(snapshot.email, snapshot.password)
             }
-            _state.update {
-                it.copy(uiState = result.toUiState())
+            val uiState = result.toUiState()
+            _state.update { it.copy(uiState = uiState) }
+            if (uiState is UiState.Success) {
+                _events.tryEmit(AuthEvent.Authorized)
             }
         }
     }
@@ -68,6 +82,10 @@ class AuthViewModel(
         if (state.value.uiState is UiState.Error) {
             _state.update { it.copy(uiState = UiState.Idle) }
         }
+    }
+
+    fun resetForm() {
+        _state.value = AuthFormState()
     }
 }
 

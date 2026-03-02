@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="allterra-mobile" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>Leszno - Leszno</name>
+    <time>2025-08-20T09:00:00Z</time>
+  </metadata>
+  <trk>
+    <name>Leszno - Leszno</name>
+    <trkseg>
+      <trkpt lat="51.84034" lon="16.57494" />
+      <trkpt lat="51.84122" lon="16.57610" />
+      <trkpt lat="51.84203" lon="16.57799" />
+      <trkpt lat="51.84310" lon="16.57966" />
+      <trkpt lat="51.84441" lon="16.58135" />
+    </trkseg>
+  </trk>
+</gpx>

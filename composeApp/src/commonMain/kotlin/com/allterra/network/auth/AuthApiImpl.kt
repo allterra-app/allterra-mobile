@@ -18,8 +18,8 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.util.network.UnresolvedAddressException
-import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
 class AuthApiImpl(
@@ -95,6 +95,9 @@ class AuthApiImpl(
             409 -> ApiResult.ValidationError(
                 message = error?.message ?: "Conflict",
                 fields = error?.validationErrors.orEmpty(),
+            )
+            in 300..399 -> ApiResult.UnknownError(
+                error?.message ?: "Request was redirected. Check API URL and HTTPS configuration."
             )
             in 500..599 -> ApiResult.ServerError(error?.message ?: "Internal server error")
             else -> ApiResult.UnknownError(error?.message ?: "Request failed")

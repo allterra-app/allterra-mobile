@@ -616,8 +616,36 @@ Intended contract:
 
 Note:
 
-- `PoiPhotoController` is currently wired with `UserPhoto` DTO/service types, while dedicated `PoiPhoto*` DTOs and service also exist in codebase.
-- For mobile client integration, treat this endpoint as unstable until this mismatch is normalized.
+- `poiId` and `postId` must be sent as UUID relation identifiers in create requests.
+
+### 9.4 Media files (upload/download)
+
+Base path: `/files`
+
+Upload:
+
+- `POST /files/upload` (`multipart/form-data`, field name: `file`)
+
+Response DTO:
+
+```json
+{
+  "id": "uuid",
+  "fileName": "image.jpg",
+  "contentType": "image/jpeg",
+  "size": 123456,
+  "url": "/api/v1/files/{id}"
+}
+```
+
+Download:
+
+- `GET /files/{id}`
+
+Storage model:
+
+- Production target: external object storage (e.g. S3), DB stores only URL references.
+- Local development: binary file is stored in local filesystem path configured by `MEDIA_STORAGE_PATH` (default `/tmp/allterra-media` in server container), not in Postgres.
 
 ## 10. Test Endpoint
 
@@ -648,10 +676,9 @@ Current API is functional but not yet ideal as a strict public contract:
 
 - Several request/response DTOs include nested entities instead of pure ID-based references.
 - Some not-found/business errors are thrown as generic runtime exceptions and may become `500`.
-- `/poi-photos` currently has DTO/service mismatch.
 
 Recommended next backend iteration before public mobile rollout:
 
 - Introduce explicit stable API contracts (`*Request`, `*Response`) with IDs only for relations.
 - Normalize error contract for all 4xx/5xx responses.
-- Stabilize and test photo endpoints, especially `/poi-photos`.
+- Add pluggable media provider configuration (`local`/`s3`) with environment-based profile switch.
