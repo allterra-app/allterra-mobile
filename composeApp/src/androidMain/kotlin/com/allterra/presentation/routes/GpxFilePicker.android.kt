@@ -19,27 +19,26 @@ private class AndroidGpxFilePicker(
 
 @Composable
 actual fun rememberGpxFilePicker(
-    onFileSelected: (fileName: String, content: String) -> Unit,
+    onFileSelected: (fileName: String, contentType: String, fileBytes: ByteArray) -> Unit,
     onFileReadError: () -> Unit,
 ): GpxFilePicker {
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
 
-        val content = runCatching {
-            context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }.orEmpty()
-        }.getOrElse {
-            onFileReadError()
-            return@rememberLauncherForActivityResult
-        }
+        val fileBytes = runCatching {
+            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+        }.getOrNull()
 
-        if (content.isBlank()) {
+        if (fileBytes == null || fileBytes.isEmpty()) {
             onFileReadError()
             return@rememberLauncherForActivityResult
         }
 
         val fileName = context.contentResolver.queryFileName(uri) ?: "track.gpx"
-        onFileSelected(fileName, content)
+        val contentType = context.contentResolver.getType(uri)
+            ?: guessContentType(fileName)
+        onFileSelected(fileName, contentType, fileBytes)
     }
 
     return remember(launcher) {
@@ -56,5 +55,13 @@ private fun ContentResolver.queryFileName(uri: Uri): String? {
     return query(uri, projection, null, null, null)?.use { cursor ->
         val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
         if (index >= 0 && cursor.moveToFirst()) cursor.getString(index) else null
+    }
+}
+
+private fun guessContentType(fileName: String): String {
+    return if (fileName.lowercase().endsWith(".gpx")) {
+        "application/gpx+xml"
+    } else {
+        "application/octet-stream"
     }
 }

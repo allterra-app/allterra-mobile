@@ -53,7 +53,7 @@ val appModule = module {
     single<TokenStorage> { PersistentTokenStorage() }
     single<SessionPreferences> { SessionPreferencesImpl() }
     single<AuthRepository> { AuthRepositoryImpl(authApi = get(), tokenStorage = get()) }
-    single<RoutesRepository> { RoutesRepositoryImpl(userApi = get(), routeApi = get()) }
+    single<RoutesRepository> { RoutesRepositoryImpl(userApi = get(), routeApi = get(), mediaApi = get()) }
     single<PoisRepository> { PoisRepositoryImpl(userApi = get(), poiApi = get(), poiPhotoApi = get(), mediaApi = get()) }
     single<PostsRepository> {
         PostsRepositoryImpl(

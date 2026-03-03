@@ -155,3 +155,13 @@ tasks.register("runProd") {
 dependencies {
     debugImplementation(compose.uiTooling)
 }
+
+val runIosSimulatorTests = providers.gradleProperty("RUN_IOS_SIM_TESTS")
+    .orElse(providers.environmentVariable("RUN_IOS_SIM_TESTS"))
+    .map { it.equals("true", ignoreCase = true) }
+    .orElse(false)
+    .get()
+
+tasks.matching { it.name == "iosSimulatorArm64Test" }.configureEach {
+    enabled = runIosSimulatorTests
+}

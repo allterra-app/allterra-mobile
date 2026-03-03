@@ -8,6 +8,6 @@ interface GpxFilePicker {
 
 @Composable
 expect fun rememberGpxFilePicker(
-    onFileSelected: (fileName: String, content: String) -> Unit,
+    onFileSelected: (fileName: String, contentType: String, fileBytes: ByteArray) -> Unit,
     onFileReadError: () -> Unit,
 ): GpxFilePicker

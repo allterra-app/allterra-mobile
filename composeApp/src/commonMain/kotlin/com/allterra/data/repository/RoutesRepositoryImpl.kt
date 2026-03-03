@@ -1,20 +1,21 @@
 package com.allterra.data.repository
 
 import com.allterra.core.result.ApiResult
+import com.allterra.domain.repository.RouteCreateProgressStage
 import com.allterra.domain.repository.RoutesRepository
+import com.allterra.network.media.MediaApi
 import com.allterra.network.route.RouteApi
 import com.allterra.network.route.RouteCreateRequestDto
 import com.allterra.network.route.RouteDto
 import com.allterra.network.user.UserApi
+import com.allterra.presentation.common.model.GeoPoint
 import com.allterra.presentation.common.model.RouteUiModel
 import com.allterra.presentation.common.time.currentUiDate
-import com.allterra.presentation.routes.RouteGpxMetrics
-import com.allterra.presentation.routes.analyzeGpx
-import kotlin.math.roundToInt
 
 class RoutesRepositoryImpl(
     private val userApi: UserApi,
     private val routeApi: RouteApi,
+    private val mediaApi: MediaApi,
 ) : RoutesRepository {
 
     override suspend fun getMyRoutes(): ApiResult<List<RouteUiModel>> {
@@ -44,8 +45,10 @@ class RoutesRepositoryImpl(
     override suspend fun createRoute(
         title: String,
         description: String,
-        gpxContent: String,
-        metrics: RouteGpxMetrics,
+        fileName: String,
+        contentType: String,
+        fileBytes: ByteArray,
+        onProgress: (RouteCreateProgressStage) -> Unit,
     ): ApiResult<RouteUiModel> {
         val me = when (val meResult = userApi.me()) {
             is ApiResult.Success -> meResult.data
@@ -58,14 +61,26 @@ class RoutesRepositoryImpl(
             is ApiResult.UnknownError -> return ApiResult.UnknownError(meResult.message)
         }
 
+        onProgress(RouteCreateProgressStage.UPLOADING)
+        val uploaded = when (val uploadResult = mediaApi.upload(fileName, contentType, fileBytes)) {
+            is ApiResult.Success -> uploadResult.data
+            is ApiResult.ValidationError -> return ApiResult.ValidationError(uploadResult.message, uploadResult.fields)
+            is ApiResult.Unauthorized -> return ApiResult.Unauthorized(uploadResult.message)
+            is ApiResult.Forbidden -> return ApiResult.Forbidden(uploadResult.message)
+            is ApiResult.NotFound -> return ApiResult.NotFound(uploadResult.message)
+            is ApiResult.ServerError -> return ApiResult.ServerError(uploadResult.message)
+            is ApiResult.NetworkError -> return ApiResult.NetworkError(uploadResult.message)
+            is ApiResult.UnknownError -> return ApiResult.UnknownError(uploadResult.message)
+        }
+
+        onProgress(RouteCreateProgressStage.PROCESSING)
         val request = RouteCreateRequestDto(
             userId = me.id,
-            title = title,
+            title = title.takeIf { it.isNotBlank() },
             description = description.takeIf { it.isNotBlank() },
-            gpxContent = gpxContent,
-            distanceKm = metrics.distanceKm,
-            durationMinutes = metrics.durationMinutes,
+            gpxFileId = uploaded.id,
         )
+
         return when (val createResult = routeApi.createForUser(me.id, request)) {
             is ApiResult.Success -> ApiResult.Success(createResult.data.toUiModel())
             is ApiResult.ValidationError -> ApiResult.ValidationError(createResult.message, createResult.fields)
@@ -104,27 +119,17 @@ class RoutesRepositoryImpl(
 }
 
 private fun RouteDto.toUiModel(): RouteUiModel {
-    val analyzed = analyzeGpx(gpxContent)
     val date = isoDateToUiDate(createdAt).ifBlank { isoDateToUiDate(modifiedAt) }.ifBlank { currentUiDate() }
+    val preview = previewPoints.map { GeoPoint(lat = it.lat, lon = it.lon) }
     return RouteUiModel(
         id = id,
         title = title,
         description = description.orEmpty(),
         date = date,
-        source = "GPX",
-        distanceKm = distanceKm ?: analyzed.distanceKm,
-        durationMinutes = durationMinutes ?: analyzed.durationMinutes,
-        pointCount = pointCount ?: analyzed.pointCount,
-        previewPoints = analyzed.points.sampleForPreview(MAX_ROUTE_PREVIEW_POINTS),
+        source = gpxFileName ?: "GPX",
+        distanceKm = distanceKm,
+        durationMinutes = durationMinutes,
+        pointCount = pointCount ?: preview.size,
+        previewPoints = preview,
     )
 }
-
-private fun List<com.allterra.presentation.common.model.GeoPoint>.sampleForPreview(maxPoints: Int): List<com.allterra.presentation.common.model.GeoPoint> {
-    if (size <= maxPoints) return this
-    val step = (size - 1).toDouble() / (maxPoints - 1).toDouble()
-    return List(maxPoints) { index ->
-        this[(index * step).roundToInt().coerceIn(0, lastIndex)]
-    }
-}
-
-private const val MAX_ROUTE_PREVIEW_POINTS = 300

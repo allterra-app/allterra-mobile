@@ -2,6 +2,7 @@ package com.allterra.presentation.routes
 
 import androidx.lifecycle.ViewModel
 import com.allterra.core.result.ApiResult
+import com.allterra.domain.repository.RouteCreateProgressStage
 import com.allterra.domain.repository.RoutesRepository
 import com.allterra.presentation.common.model.RouteUiModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -18,8 +19,9 @@ import kotlinx.coroutines.launch
 data class RouteCreateDraft(
     val title: String = "",
     val description: String = "",
-    val gpxContent: String = "",
     val importedFileName: String? = null,
+    val importedFileContentType: String = "application/gpx+xml",
+    val importedFileBytes: ByteArray? = null,
 )
 
 data class RoutesUiState(
@@ -28,7 +30,7 @@ data class RoutesUiState(
     val isSaving: Boolean = false,
     val isCreateOpen: Boolean = false,
     val createDraft: RouteCreateDraft = RouteCreateDraft(),
-    val createMetrics: RouteGpxMetrics? = null,
+    val createProgress: RouteCreateProgressStage? = null,
     val createError: String? = null,
     val deletingIds: Set<String> = emptySet(),
 )
@@ -65,14 +67,14 @@ class RoutesViewModel(
             it.copy(
                 isCreateOpen = true,
                 createDraft = RouteCreateDraft(),
-                createMetrics = null,
+                createProgress = null,
                 createError = null,
             )
         }
     }
 
     fun closeCreateRoute() {
-        _state.update { it.copy(isCreateOpen = false, createError = null) }
+        _state.update { it.copy(isCreateOpen = false, createProgress = null, createError = null) }
     }
 
     fun onCreateTitleChanged(value: String) {
@@ -83,19 +85,17 @@ class RoutesViewModel(
         _state.update { it.copy(createDraft = it.createDraft.copy(description = value), createError = null) }
     }
 
-    fun onCreateGpxImported(fileName: String, content: String) {
-        val metrics = analyzeGpx(content)
-        val suggestedTitle = metrics.routeName
-            ?: fileName.substringBeforeLast(".").takeIf { it.isNotBlank() }
+    fun onCreateGpxImported(fileName: String, contentType: String, fileBytes: ByteArray) {
+        val suggestedTitle = fileName.substringBeforeLast(".").takeIf { it.isNotBlank() }
 
         _state.update {
             it.copy(
                 createDraft = it.createDraft.copy(
-                    gpxContent = content,
                     importedFileName = fileName,
+                    importedFileContentType = contentType,
+                    importedFileBytes = fileBytes,
                     title = it.createDraft.title.ifBlank { suggestedTitle.orEmpty() },
                 ),
-                createMetrics = metrics,
                 createError = null,
             )
         }
@@ -107,26 +107,40 @@ class RoutesViewModel(
 
     fun saveCreatedRoute(validationMessage: String) {
         val state = _state.value
-        val gpx = state.createDraft.gpxContent.trim()
-        if (gpx.isBlank()) {
+        val fileName = state.createDraft.importedFileName
+        val fileBytes = state.createDraft.importedFileBytes
+        if (fileName.isNullOrBlank() || fileBytes == null || fileBytes.isEmpty()) {
             _state.update { it.copy(createError = validationMessage) }
             return
         }
 
-        val metrics = state.createMetrics ?: analyzeGpx(gpx)
-        if (metrics.pointCount < 2) {
+        if (!fileName.lowercase().endsWith(".gpx")) {
             _state.update { it.copy(createError = validationMessage) }
             return
         }
 
         scope.launch {
-            _state.update { it.copy(isSaving = true, createError = null) }
+            _state.update {
+                it.copy(
+                    isSaving = true,
+                    createProgress = RouteCreateProgressStage.UPLOADING,
+                    createError = null,
+                )
+            }
+
             val result = routesRepository.createRoute(
-                title = state.createDraft.title.ifBlank { metrics.routeName ?: "Route" },
+                title = state.createDraft.title,
                 description = state.createDraft.description,
-                gpxContent = gpx,
-                metrics = metrics,
+                fileName = fileName,
+                contentType = state.createDraft.importedFileContentType,
+                fileBytes = fileBytes,
+                onProgress = { progress ->
+                    _state.update { current ->
+                        current.copy(createProgress = progress)
+                    }
+                },
             )
+
             when (result) {
                 is ApiResult.Success -> {
                     _state.update {
@@ -134,7 +148,7 @@ class RoutesViewModel(
                             isSaving = false,
                             isCreateOpen = false,
                             createDraft = RouteCreateDraft(),
-                            createMetrics = null,
+                            createProgress = null,
                             createError = null,
                             items = listOf(result.data) + it.items,
                         )
@@ -142,7 +156,7 @@ class RoutesViewModel(
                 }
 
                 else -> _state.update {
-                    it.copy(isSaving = false, createError = result.message())
+                    it.copy(isSaving = false, createProgress = null, createError = result.message())
                 }
             }
         }

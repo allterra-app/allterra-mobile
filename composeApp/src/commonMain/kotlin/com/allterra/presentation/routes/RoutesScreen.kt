@@ -25,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -235,6 +236,7 @@ private fun RouteCreateScreen(
 
         Button(
             onClick = onImportGpx,
+            enabled = !state.isSaving,
             modifier = Modifier.padding(top = 8.dp),
         ) {
             Text(strings.importGpxAction)
@@ -255,38 +257,30 @@ private fun RouteCreateScreen(
             )
         }
 
-        state.createMetrics?.let { metrics ->
-            Card(
+        if (state.isSaving) {
+            LinearProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 12.dp),
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text(
-                        text = metrics.routeName ?: strings.routePreviewTitle,
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    RoutePreviewCanvas(
-                        points = metrics.points,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
-                            .height(140.dp),
-                    )
-                    Text(
-                        text = "${strings.routeDistanceLabel}: ${metrics.distanceKm ?: 0.0} km",
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                    Text(text = "${strings.routeDurationLabel}: ${metrics.durationMinutes ?: 0} min")
-                    metrics.startedAt?.let {
-                        Text(text = "${strings.addedLabel}: $it")
-                    }
-                }
+                color = Color.White,
+                trackColor = Color.White.copy(alpha = 0.3f),
+            )
+            val progressLabel = when (state.createProgress) {
+                com.allterra.domain.repository.RouteCreateProgressStage.UPLOADING -> strings.routeUploadingLabel
+                com.allterra.domain.repository.RouteCreateProgressStage.PROCESSING -> strings.routeProcessingLabel
+                null -> strings.loadingText
             }
+            Text(
+                text = progressLabel,
+                modifier = Modifier.padding(top = 8.dp),
+                color = Color.White.copy(alpha = 0.9f),
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
 
         Button(
             onClick = onSave,
+            enabled = !state.isSaving,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 14.dp, bottom = 8.dp),
