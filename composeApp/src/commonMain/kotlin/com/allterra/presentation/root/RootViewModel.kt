@@ -134,6 +134,7 @@ class RootViewModel(
             val hasSessionFlag = sessionPreferences.isLoggedIn()
             val hasAccessToken = !tokenStorage.getAccessToken().isNullOrBlank()
             val hasSession = hasSessionFlag && hasAccessToken
+            val targetStage = if (hasSession) RootStage.MAIN else RootStage.AUTH
 
             if (hasSessionFlag && !hasAccessToken) {
                 sessionPreferences.setLoggedIn(false)
@@ -142,7 +143,7 @@ class RootViewModel(
             _state.update {
                 it.copy(
                     language = language,
-                    stage = if (hasSession) RootStage.SPLASH else RootStage.AUTH,
+                    stage = RootStage.SPLASH,
                     authScreen = AuthScreen.LOGIN,
                     selectedMainTab = MainTab.FEED,
                     overlay = MainOverlay.NONE,
@@ -150,9 +151,14 @@ class RootViewModel(
                 )
             }
 
-            if (hasSession) {
-                delay(SPLASH_DELAY_MS)
-                _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.FEED) }
+            delay(SPLASH_DELAY_MS)
+
+            _state.update {
+                if (targetStage == RootStage.MAIN) {
+                    it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.FEED, overlay = MainOverlay.NONE)
+                } else {
+                    it.copy(stage = RootStage.AUTH, authScreen = AuthScreen.LOGIN, overlay = MainOverlay.NONE)
+                }
             }
         }
     }

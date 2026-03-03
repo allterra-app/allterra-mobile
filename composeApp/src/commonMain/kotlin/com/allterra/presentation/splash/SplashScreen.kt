@@ -1,10 +1,12 @@
 package com.allterra.presentation.splash
 
 import allterra.composeapp.generated.resources.Res
-import allterra.composeapp.generated.resources.allterra_logo
+import allterra.composeapp.generated.resources.allterra_named_logo
+import allterra.composeapp.generated.resources.allterra_text_logo
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -26,14 +28,14 @@ import org.jetbrains.compose.resources.painterResource
 fun SplashScreen(backdropIndex: Int) {
     val strings = appStrings()
 
-    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(resolveBackdrop(backdropIndex)),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
         )
-        androidx.compose.foundation.layout.Box(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Brush.verticalGradient(listOf(Color(0x33000000), Color(0xAA122937))))
@@ -46,9 +48,16 @@ fun SplashScreen(backdropIndex: Int) {
             verticalArrangement = Arrangement.Center,
         ) {
             Image(
-                painter = painterResource(Res.drawable.allterra_logo),
+                painter = painterResource(Res.drawable.allterra_named_logo),
                 contentDescription = strings.appName,
-                modifier = Modifier.size(220.dp),
+                modifier = Modifier.size(190.dp),
+            )
+            Image(
+                painter = painterResource(Res.drawable.allterra_text_logo),
+                contentDescription = strings.appName,
+                modifier = Modifier
+                    .size(width = 210.dp, height = 46.dp)
+                    .padding(top = 8.dp, bottom = 16.dp),
             )
             CircularProgressIndicator(color = Color.White)
             Text(text = strings.loadingText, color = Color.White, modifier = Modifier.padding(top = 12.dp))
