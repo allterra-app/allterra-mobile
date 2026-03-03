@@ -3,6 +3,7 @@ package com.allterra.presentation.auth
 import allterra.composeapp.generated.resources.Res
 import allterra.composeapp.generated.resources.allterra_logo
 import allterra.composeapp.generated.resources.allterra_named_logo
+import allterra.composeapp.generated.resources.allterra_text_logo
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -157,7 +158,16 @@ private fun LoginScreen(
             Image(
                 painter = painterResource(Res.drawable.allterra_named_logo),
                 contentDescription = strings.appName,
-                modifier = Modifier.size(250.dp),
+                modifier = Modifier.size(width = 250.dp, height = 170.dp),
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.TopCenter,
+            )
+            Image(
+                painter = painterResource(Res.drawable.allterra_text_logo),
+                contentDescription = strings.appName,
+                modifier = Modifier
+                    .size(width = 210.dp, height = 46.dp)
+                    .padding(top = 2.dp),
             )
 
             Spacer(modifier = Modifier.weight(0.06f))
