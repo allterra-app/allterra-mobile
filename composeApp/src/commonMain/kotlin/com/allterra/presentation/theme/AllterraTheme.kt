@@ -1,37 +1,96 @@
 package com.allterra.presentation.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.isSystemInDarkTheme
-
-private val LightColors = lightColorScheme(
-    primary = androidx.compose.ui.graphics.Color(0xFF2F7A8E),
-    onPrimary = androidx.compose.ui.graphics.Color.White,
-    secondary = androidx.compose.ui.graphics.Color(0xFF4A8B7F),
-    onSecondary = androidx.compose.ui.graphics.Color.White,
-    surface = androidx.compose.ui.graphics.Color(0xFFF2F4F6),
-    onSurface = androidx.compose.ui.graphics.Color(0xFF102129),
-    surfaceVariant = androidx.compose.ui.graphics.Color(0xFFDCE4E8),
-    onSurfaceVariant = androidx.compose.ui.graphics.Color(0xFF314852),
-)
-
-private val DarkColors = darkColorScheme(
-    primary = androidx.compose.ui.graphics.Color(0xFF78B6C7),
-    onPrimary = androidx.compose.ui.graphics.Color(0xFF0B2A33),
-    secondary = androidx.compose.ui.graphics.Color(0xFF8AC8A2),
-    onSecondary = androidx.compose.ui.graphics.Color(0xFF113326),
-    surface = androidx.compose.ui.graphics.Color(0xFF0F1C23),
-    onSurface = androidx.compose.ui.graphics.Color(0xFFE6EEF2),
-    surfaceVariant = androidx.compose.ui.graphics.Color(0xFF1E2D36),
-    onSurfaceVariant = androidx.compose.ui.graphics.Color(0xFFC8D5DB),
-)
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.text.TextStyle
 
 @Composable
-fun AllterraTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors,
-        content = content,
-    )
+fun AllterraTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val colors = if (darkTheme) DarkColors else LightColors
+    val categorical = if (darkTheme) DarkCategorical else LightCategorical
+    val typography = allterraTypography()
+    val elevation = if (darkTheme) DarkElevation else LightElevation
+
+    val materialColorScheme = if (darkTheme) {
+        darkColorScheme(
+            primary = colors.moss,
+            onPrimary = colors.ink,
+            secondary = colors.terra,
+            surface = colors.bg,
+            onSurface = colors.ink,
+            background = colors.bg,
+            onBackground = colors.ink
+        )
+    } else {
+        lightColorScheme(
+            primary = colors.moss,
+            onPrimary = androidx.compose.ui.graphics.Color.White,
+            secondary = colors.terra,
+            surface = colors.bg,
+            onSurface = colors.ink,
+            background = colors.bg,
+            onBackground = colors.ink
+        )
+    }
+
+    CompositionLocalProvider(
+        LocalAllterraColors provides colors,
+        LocalAllterraCategoricalColors provides categorical,
+        LocalAllterraTypography provides typography,
+        LocalAllterraRadius provides AllterraRadius(),
+        LocalAllterraSpacing provides AllterraSpacing(),
+        LocalAllterraElevation provides elevation
+    ) {
+        MaterialTheme(
+            colorScheme = materialColorScheme,
+            typography = Typography(
+                bodyLarge = typography.body,
+                titleLarge = typography.title,
+                labelLarge = typography.caption
+            ),
+            content = content
+        )
+    }
 }
+
+object AllterraTheme {
+    val colors: AllterraColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAllterraColors.current
+
+    val categorical: AllterraCategoricalColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAllterraCategoricalColors.current
+
+    val typography: AllterraTypography
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAllterraTypography.current
+
+    val radius: AllterraRadius
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAllterraRadius.current
+
+    val spacing: AllterraSpacing
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAllterraSpacing.current
+
+    val elevation: AllterraElevation
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAllterraElevation.current
+}
+

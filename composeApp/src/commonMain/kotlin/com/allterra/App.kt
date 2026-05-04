@@ -35,12 +35,15 @@ import com.allterra.presentation.routes.RoutesViewModel
 import com.allterra.presentation.settings.SettingsScreen
 import com.allterra.presentation.splash.SplashScreen
 import com.allterra.presentation.theme.AllterraTheme
+import com.allterra.presentation.theme.ThemePreviewScreen
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun App() {
+    val showThemePreview = true // DEBUG: Set to true to verify redesign tokens
+
     KoinApplication(application = { modules(appModule) }) {
         val rootViewModel: RootViewModel = koinViewModel()
         val authViewModel: AuthViewModel = koinViewModel()
@@ -53,11 +56,14 @@ fun App() {
             LocalAppStrings provides strings,
         ) {
             AllterraTheme {
-                LaunchedEffect(rootState.stage) {
-                    if (rootState.stage == RootStage.AUTH) authViewModel.resetForm()
-                }
+                if (showThemePreview) {
+                    ThemePreviewScreen()
+                } else {
+                    LaunchedEffect(rootState.stage) {
+                        if (rootState.stage == RootStage.AUTH) authViewModel.resetForm()
+                    }
 
-                when (rootState.stage) {
+                    when (rootState.stage) {
                     RootStage.SPLASH -> SplashScreen(backdropIndex = rootState.backdropIndex)
 
                     RootStage.AUTH -> AuthScreen(
