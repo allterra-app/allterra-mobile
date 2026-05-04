@@ -18,6 +18,7 @@ import allterra.composeapp.generated.resources.manrope_semibold
 import allterra.composeapp.generated.resources.manrope_bold
 import allterra.composeapp.generated.resources.spacegrotesk_semibold
 import allterra.composeapp.generated.resources.jetbrainsmono_medium
+import androidx.compose.runtime.Composable
 
 @Immutable
 data class AllterraColors(

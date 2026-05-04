@@ -16,6 +16,7 @@ import kotlin.random.Random
 
 enum class RootStage {
     SPLASH,
+    ONBOARDING,
     AUTH,
     MAIN,
 }
@@ -59,6 +60,13 @@ class RootViewModel(
     fun onLanguageChanged(language: AppLanguage) {
         _state.update { it.copy(language = language) }
         viewModelScope.launch { sessionPreferences.setLanguage(language) }
+    }
+
+    fun onOnboardingCompleted() {
+        viewModelScope.launch {
+            sessionPreferences.setOnboardingCompleted(true)
+            _state.update { it.copy(stage = RootStage.AUTH, authScreen = AuthScreen.LOGIN) }
+        }
     }
 
     fun onAuthSuccess() {
@@ -134,7 +142,13 @@ class RootViewModel(
             val hasSessionFlag = sessionPreferences.isLoggedIn()
             val hasAccessToken = !tokenStorage.getAccessToken().isNullOrBlank()
             val hasSession = hasSessionFlag && hasAccessToken
-            val targetStage = if (hasSession) RootStage.MAIN else RootStage.AUTH
+            val isOnboardingCompleted = sessionPreferences.isOnboardingCompleted()
+            
+            val targetStage = when {
+                hasSession -> RootStage.MAIN
+                isOnboardingCompleted -> RootStage.AUTH
+                else -> RootStage.ONBOARDING
+            }
 
             if (hasSessionFlag && !hasAccessToken) {
                 sessionPreferences.setLoggedIn(false)
@@ -154,11 +168,10 @@ class RootViewModel(
             delay(SPLASH_DELAY_MS)
 
             _state.update {
-                if (targetStage == RootStage.MAIN) {
-                    it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.FEED, overlay = MainOverlay.NONE)
-                } else {
-                    it.copy(stage = RootStage.AUTH, authScreen = AuthScreen.LOGIN, overlay = MainOverlay.NONE)
-                }
+                it.copy(
+                    stage = targetStage,
+                    selectedMainTab = if (targetStage == RootStage.MAIN) MainTab.FEED else it.selectedMainTab
+                )
             }
         }
     }
@@ -174,6 +187,6 @@ class RootViewModel(
 
     private companion object {
         private const val BACKDROP_COUNT = 2
-        private const val SPLASH_DELAY_MS = 900L
+        private const val SPLASH_DELAY_MS = 2500L // Increased for redesign animation
     }
 }

@@ -7,6 +7,8 @@ interface SessionPreferences {
     suspend fun setLoggedIn(value: Boolean)
     suspend fun getLanguage(): AppLanguage
     suspend fun setLanguage(language: AppLanguage)
+    suspend fun isOnboardingCompleted(): Boolean
+    suspend fun setOnboardingCompleted(value: Boolean)
 }
 
 class SessionPreferencesImpl : SessionPreferences {
@@ -27,8 +29,17 @@ class SessionPreferencesImpl : SessionPreferences {
         PlatformSettings.putString(KEY_LANGUAGE, language.code)
     }
 
+    override suspend fun isOnboardingCompleted(): Boolean {
+        return PlatformSettings.getBoolean(KEY_ONBOARDING_COMPLETED, defaultValue = false)
+    }
+
+    override suspend fun setOnboardingCompleted(value: Boolean) {
+        PlatformSettings.putBoolean(KEY_ONBOARDING_COMPLETED, value)
+    }
+
     private companion object {
         private const val KEY_LOGGED_IN = "logged_in"
         private const val KEY_LANGUAGE = "language"
+        private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
     }
 }

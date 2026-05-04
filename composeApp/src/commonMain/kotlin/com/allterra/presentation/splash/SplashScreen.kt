@@ -1,66 +1,80 @@
 package com.allterra.presentation.splash
 
 import allterra.composeapp.generated.resources.Res
-import allterra.composeapp.generated.resources.allterra_named_logo
+import allterra.composeapp.generated.resources.allterra_logo
 import allterra.composeapp.generated.resources.allterra_text_logo
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.allterra.presentation.common.components.resolveBackdrop
-import com.allterra.presentation.localization.appStrings
+import com.allterra.presentation.theme.AllterraTheme
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun SplashScreen(backdropIndex: Int) {
-    val strings = appStrings()
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(resolveBackdrop(backdropIndex)),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
+    var startAnimation by remember { mutableStateOf(false) }
+    
+    val pinOffset by animateDpAsState(
+        targetValue = if (startAnimation) 0.dp else (-300).dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBounce,
+            stiffness = Spring.StiffnessLow
         )
+    )
+    
+    val logoAlpha by animateFloatAsState(
+        targetValue = if (startAnimation) 1f else 0f,
+        animationSpec = tween(durationMillis = 1000, delayMillis = 500)
+    )
+
+    LaunchedEffect(Unit) {
+        startAnimation = true
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AllterraTheme.colors.bgSub),
+        contentAlignment = Alignment.Center
+    ) {
+        // Simple mountain placeholder using basic shapes or just color for now
+        // In a real app, this would be a vector illustration
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color(0x33000000), Color(0xAA122937))))
+                .fillMaxWidth()
+                .fillMaxHeight(0.4f)
+                .align(Alignment.BottomCenter)
+                .background(AllterraTheme.colors.mossSoft.copy(alpha = 0.5f))
         )
+
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(bottom = 100.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Center
         ) {
             Image(
-                painter = painterResource(Res.drawable.allterra_named_logo),
-                contentDescription = strings.appName,
-                modifier = Modifier.size(190.dp),
+                painter = painterResource(Res.drawable.allterra_logo),
+                contentDescription = null,
+                modifier = Modifier
+                    .size(120.dp)
+                    .offset(y = pinOffset)
             )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
             Image(
                 painter = painterResource(Res.drawable.allterra_text_logo),
-                contentDescription = strings.appName,
+                contentDescription = "Allterra",
                 modifier = Modifier
-                    .size(width = 210.dp, height = 46.dp)
-                    .padding(top = 8.dp, bottom = 16.dp),
+                    .width(200.dp)
+                    .alpha(logoAlpha)
             )
-            CircularProgressIndicator(color = Color.White)
-            Text(text = strings.loadingText, color = Color.White, modifier = Modifier.padding(top = 12.dp))
         }
     }
 }

@@ -27,6 +27,7 @@ import com.allterra.presentation.pois.PoisScreen
 import com.allterra.presentation.pois.PoisViewModel
 import com.allterra.presentation.profile.ProfileScreen
 import com.allterra.presentation.profile.ProfileViewModel
+import com.allterra.presentation.onboarding.OnboardingScreen
 import com.allterra.presentation.root.MainOverlay
 import com.allterra.presentation.root.RootStage
 import com.allterra.presentation.root.RootViewModel
@@ -41,8 +42,9 @@ import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
+@Preview
 fun App() {
-    val showThemePreview = true // DEBUG: Set to true to verify redesign tokens
+    val showThemePreview = false // DEBUG: Set to true to verify redesign tokens
 
     KoinApplication(application = { modules(appModule) }) {
         val rootViewModel: RootViewModel = koinViewModel()
@@ -64,22 +66,26 @@ fun App() {
                     }
 
                     when (rootState.stage) {
-                    RootStage.SPLASH -> SplashScreen(backdropIndex = rootState.backdropIndex)
+                        RootStage.SPLASH -> SplashScreen(backdropIndex = rootState.backdropIndex)
 
-                    RootStage.AUTH -> AuthScreen(
-                        mode = rootState.authScreen,
-                        viewModel = authViewModel,
-                        backdropIndex = rootState.backdropIndex,
-                        selectedLanguage = rootState.language,
-                        onLanguageSwitchClick = {
-                            rootViewModel.onLanguageChanged(rootState.language.next())
-                        },
-                        onOpenLogin = rootViewModel::openLogin,
-                        onOpenRegister = rootViewModel::openRegister,
-                        onAuthorized = rootViewModel::onAuthSuccess,
-                    )
+                        RootStage.ONBOARDING -> OnboardingScreen(
+                            onCompleted = rootViewModel::onOnboardingCompleted
+                        )
 
-                    RootStage.MAIN -> Box(modifier = Modifier.fillMaxSize()) {
+                        RootStage.AUTH -> AuthScreen(
+                            mode = rootState.authScreen,
+                            viewModel = authViewModel,
+                            backdropIndex = rootState.backdropIndex,
+                            selectedLanguage = rootState.language,
+                            onLanguageSwitchClick = {
+                                rootViewModel.onLanguageChanged(rootState.language.next())
+                            },
+                            onOpenLogin = rootViewModel::openLogin,
+                            onOpenRegister = rootViewModel::openRegister,
+                            onAuthorized = rootViewModel::onAuthSuccess,
+                        )
+
+                        RootStage.MAIN -> Box(modifier = Modifier.fillMaxSize()) {
                         val feedViewModel: FeedViewModel = koinViewModel()
                         val profileViewModel: ProfileViewModel = koinViewModel()
                         val poisViewModel: PoisViewModel = koinViewModel()
@@ -132,6 +138,7 @@ fun App() {
                             strings = strings,
                             onTabSelected = rootViewModel::onMainTabSelected,
                         )
+                    }
                     }
                 }
             }
