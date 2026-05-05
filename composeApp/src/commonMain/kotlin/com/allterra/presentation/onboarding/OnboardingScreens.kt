@@ -105,12 +105,17 @@ private fun FeatureCard(title: String, categorical: CategoricalColor, modifier: 
 
 @Composable
 fun OnboardingStep(step: Int, onNext: () -> Unit, onSkip: () -> Unit) {
-    val data = remember(step) {
+    val wallet = AllterraTheme.categorical.wallet
+    val route = AllterraTheme.categorical.route
+    val gear = AllterraTheme.categorical.gear
+    val social = AllterraTheme.categorical.social
+
+    val data = remember(step, wallet, route, gear, social) {
         when (step) {
-            0 -> OnboardingData("Travel Wallet", "Aggregate all your PDFs, tickets, and bookings in one secure place.", AllterraTheme.categorical.wallet)
-            1 -> OnboardingData("Offline Maps", "Navigate trails and cities without worrying about internet connection.", AllterraTheme.categorical.route)
-            2 -> OnboardingData("Gear Tracking", "Manage your equipment, track wear, and never forget a piece of gear.", AllterraTheme.categorical.gear)
-            else -> OnboardingData("Share the Journey", "Join clubs, follow friends, and share your outdoor stories.", AllterraTheme.categorical.social)
+            0 -> OnboardingData("Travel Wallet", "Aggregate all your PDFs, tickets, and bookings in one secure place.", wallet)
+            1 -> OnboardingData("Offline Maps", "Navigate trails and cities without worrying about internet connection.", route)
+            2 -> OnboardingData("Gear Tracking", "Manage your equipment, track wear, and never forget a piece of gear.", gear)
+            else -> OnboardingData("Share the Journey", "Join clubs, follow friends, and share your outdoor stories.", social)
         }
     }
 

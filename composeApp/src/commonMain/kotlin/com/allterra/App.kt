@@ -110,7 +110,7 @@ fun App() {
                                 )
 
                                 rootState.selectedMainTab == MainTab.HOME -> DashboardScreen(
-                                    userName = profileState.user?.username ?: "Explorer",
+                                    userName = profileState.userName.ifBlank { "Explorer" },
                                     onLogout = rootViewModel::onLogout,
                                     onOpenPacking = {},
                                     onNewPost = { rootViewModel.onMainTabSelected(MainTab.FEED) },
