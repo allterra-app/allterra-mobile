@@ -24,8 +24,8 @@ fun SplashScreen(backdropIndex: Int) {
     val pinOffset by animateDpAsState(
         targetValue = if (startAnimation) 0.dp else (-300).dp,
         animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBounce,
-            stiffness = Spring.StiffnessLow
+            dampingRatio = 0.5f, // Medium bounce
+            stiffness = 200f // Low stiffness
         )
     )
     

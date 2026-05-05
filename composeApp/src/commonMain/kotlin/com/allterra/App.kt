@@ -28,6 +28,7 @@ import com.allterra.presentation.pois.PoisViewModel
 import com.allterra.presentation.profile.ProfileScreen
 import com.allterra.presentation.profile.ProfileViewModel
 import com.allterra.presentation.onboarding.OnboardingScreen
+import com.allterra.presentation.dashboard.DashboardScreen
 import com.allterra.presentation.root.MainOverlay
 import com.allterra.presentation.root.RootStage
 import com.allterra.presentation.root.RootViewModel
@@ -92,6 +93,7 @@ fun App() {
                         val routesViewModel: RoutesViewModel = koinViewModel()
                         val routesState by routesViewModel.state.collectAsStateWithLifecycle()
                         val poisState by poisViewModel.state.collectAsStateWithLifecycle()
+                        val profileState by profileViewModel.state.collectAsStateWithLifecycle()
 
                         LaunchedEffect(rootState.stage) {
                             feedViewModel.refresh()
@@ -100,33 +102,36 @@ fun App() {
                             poisViewModel.refreshPois()
                         }
 
-                        Box(modifier = Modifier
-                            .fillMaxSize()
-                            .padding(bottom = 56.dp)) {
+                        Box(modifier = Modifier.fillMaxSize()) {
                             when {
                                 rootState.overlay == MainOverlay.POIS -> PoisScreen(
                                     viewModel = poisViewModel,
                                     onBack = rootViewModel::closeOverlay,
                                 )
 
-                                rootState.selectedMainTab == MainTab.FEED -> FeedScreen(viewModel = feedViewModel)
-
-                                rootState.selectedMainTab == MainTab.PROFILE -> ProfileScreen(
-                                    viewModel = profileViewModel,
-                                    availableRoutes = routesState.items,
-                                    availablePois = poisState.items,
-                                    onOpenPois = rootViewModel::openPoisFromProfile,
-                                    onOpenRoutes = rootViewModel::openRoutesFromProfile,
-                                    onOpenWardrobe = rootViewModel::openWardrobePlaceholder,
+                                rootState.selectedMainTab == MainTab.HOME -> DashboardScreen(
+                                    userName = profileState.user?.username ?: "Explorer",
                                     onLogout = rootViewModel::onLogout,
+                                    onOpenPacking = {},
+                                    onNewPost = { rootViewModel.onMainTabSelected(MainTab.FEED) },
+                                    onAddDoc = { rootViewModel.onMainTabSelected(MainTab.WALLET) }
                                 )
 
-                                rootState.selectedMainTab == MainTab.ROUTES -> RoutesScreen(
+                                rootState.selectedMainTab == MainTab.FEED -> FeedScreen(viewModel = feedViewModel)
+
+                                rootState.selectedMainTab == MainTab.TRIPS -> RoutesScreen(
                                     viewModel = routesViewModel,
-                                    onBack = { rootViewModel.onMainTabSelected(MainTab.PROFILE) },
+                                    onBack = { rootViewModel.onMainTabSelected(MainTab.HOME) },
                                 )
 
                                 rootState.selectedMainTab == MainTab.MAP -> MapScreen()
+
+                                rootState.selectedMainTab == MainTab.WALLET -> Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    androidx.compose.material3.Text("Wallet Coming Soon", style = AllterraTheme.typography.displayM)
+                                }
 
                                 else -> SettingsScreen()
                             }

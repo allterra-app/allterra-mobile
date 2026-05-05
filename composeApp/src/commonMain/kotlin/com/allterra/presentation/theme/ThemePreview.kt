@@ -67,6 +67,8 @@ fun ThemePreviewScreen() {
             var text by remember { mutableStateOf("") }
             AllterraInput(value = text, onValueChange = { text = it }, placeholder = "Enter text...")
             Spacer(modifier = Modifier.height(12.dp))
+            AllterraProgressBar(progress = 0.65f)
+            Spacer(modifier = Modifier.height(12.dp))
             AllterraCard {
                 Column {
                     Text("Card Content", style = AllterraTheme.typography.title, color = AllterraTheme.colors.ink)

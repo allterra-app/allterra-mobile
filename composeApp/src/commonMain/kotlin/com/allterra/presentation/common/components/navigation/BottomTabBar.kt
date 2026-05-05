@@ -1,34 +1,28 @@
 package com.allterra.presentation.common.components.navigation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Map
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Place
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.allterra.presentation.common.components.redesign.allterraClickable
 import com.allterra.presentation.localization.AppStrings
+import com.allterra.presentation.theme.AllterraTheme
 
 enum class MainTab {
-    ROUTES,
-    PROFILE,
+    HOME,
     FEED,
     MAP,
-    SETTINGS,
+    WALLET,
+    TRIPS,
 }
 
 @Composable
@@ -38,26 +32,45 @@ fun BottomTabBar(
     strings: AppStrings,
     onTabSelected: (MainTab) -> Unit,
 ) {
-    Row(
+    Box(
         modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .background(Color(0xBFE0EAF2))
+            .padding(horizontal = AllterraTheme.spacing.tabbarMargin)
+            .padding(bottom = 18.dp) // marginBottom from tokens
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(AllterraTheme.radius.tabbar),
+                ambientColor = Color.Black.copy(alpha = 0.1f),
+                spotColor = Color.Black.copy(alpha = 0.1f)
+            )
+            .clip(RoundedCornerShape(AllterraTheme.radius.tabbar))
+            .background(AllterraTheme.colors.surface)
+            .height(64.dp)
+            .fillMaxWidth()
     ) {
-        MainTab.entries.forEach { tab ->
-            val selected = tab == selectedTab
-            val tint = if (selected) Color(0xFF0B7A74) else Color(0xFFB27A91)
+        Row(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            MainTab.entries.forEach { tab ->
+                val selected = tab == selectedTab
+                val tint = if (selected) AllterraTheme.colors.moss else AllterraTheme.colors.muted2
 
-            androidx.compose.material3.IconButton(onClick = { onTabSelected(tab) }) {
-                Icon(
-                    imageVector = tab.icon(),
-                    contentDescription = tab.label(strings),
-                    tint = tint,
-                )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .allterraClickable { onTabSelected(tab) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = tab.icon(),
+                        contentDescription = tab.label(strings),
+                        tint = tint,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
         }
     }
@@ -65,20 +78,21 @@ fun BottomTabBar(
 
 private fun MainTab.icon(): androidx.compose.ui.graphics.vector.ImageVector {
     return when (this) {
-        MainTab.ROUTES -> Icons.Outlined.Place
-        MainTab.PROFILE -> Icons.Outlined.Person
+        MainTab.HOME -> Icons.Outlined.GridView
+        MainTab.FEED -> Icons.Outlined.DynamicFeed
         MainTab.MAP -> Icons.Outlined.Map
-        MainTab.FEED -> Icons.Outlined.Home
-        MainTab.SETTINGS -> Icons.Outlined.Settings
+        MainTab.WALLET -> Icons.Outlined.AccountBalanceWallet
+        MainTab.TRIPS -> Icons.Outlined.Hiking
     }
 }
 
 fun MainTab.label(strings: AppStrings): String {
+    // Note: Temporary labels using existing strings or defaults
     return when (this) {
-        MainTab.ROUTES -> strings.tabRoutes
-        MainTab.PROFILE -> strings.tabProfile
-        MainTab.MAP -> strings.tabMap
+        MainTab.HOME -> "Home"
         MainTab.FEED -> strings.tabFeed
-        MainTab.SETTINGS -> strings.tabSettings
+        MainTab.MAP -> strings.tabMap
+        MainTab.WALLET -> "Wallet"
+        MainTab.TRIPS -> strings.tabRoutes
     }
 }

@@ -34,7 +34,7 @@ enum class MainOverlay {
 data class RootUiState(
     val stage: RootStage = RootStage.SPLASH,
     val authScreen: AuthScreen = AuthScreen.LOGIN,
-    val selectedMainTab: MainTab = MainTab.FEED,
+    val selectedMainTab: MainTab = MainTab.HOME,
     val overlay: MainOverlay = MainOverlay.NONE,
     val language: AppLanguage = AppLanguage.EN,
     val backdropIndex: Int = 0,
@@ -77,7 +77,7 @@ class RootViewModel(
             _state.update {
                 it.copy(
                     stage = RootStage.SPLASH,
-                    selectedMainTab = MainTab.FEED,
+                    selectedMainTab = MainTab.HOME,
                     overlay = MainOverlay.NONE,
                     backdropIndex = randomBackdrop(except = it.backdropIndex),
                 )
@@ -86,7 +86,7 @@ class RootViewModel(
             _state.update {
                 it.copy(
                     stage = RootStage.MAIN,
-                    selectedMainTab = MainTab.FEED,
+                    selectedMainTab = MainTab.HOME,
                     overlay = MainOverlay.NONE,
                 )
             }
@@ -121,15 +121,15 @@ class RootViewModel(
     }
 
     fun openPoisFromProfile() {
-        _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.PROFILE, overlay = MainOverlay.POIS) }
+        _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.HOME, overlay = MainOverlay.POIS) }
     }
 
     fun openRoutesFromProfile() {
-        _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.ROUTES, overlay = MainOverlay.NONE) }
+        _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.TRIPS, overlay = MainOverlay.NONE) }
     }
 
     fun openWardrobePlaceholder() {
-        _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.SETTINGS, overlay = MainOverlay.NONE) }
+        _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.HOME, overlay = MainOverlay.NONE) }
     }
 
     fun closeOverlay() {
@@ -159,7 +159,7 @@ class RootViewModel(
                     language = language,
                     stage = RootStage.SPLASH,
                     authScreen = AuthScreen.LOGIN,
-                    selectedMainTab = MainTab.FEED,
+                    selectedMainTab = MainTab.HOME,
                     overlay = MainOverlay.NONE,
                     backdropIndex = randomBackdrop(except = it.backdropIndex),
                 )
@@ -170,7 +170,7 @@ class RootViewModel(
             _state.update {
                 it.copy(
                     stage = targetStage,
-                    selectedMainTab = if (targetStage == RootStage.MAIN) MainTab.FEED else it.selectedMainTab
+                    selectedMainTab = if (targetStage == RootStage.MAIN) MainTab.HOME else it.selectedMainTab
                 )
             }
         }
