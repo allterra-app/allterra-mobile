@@ -37,6 +37,7 @@ import com.allterra.presentation.settings.SettingsScreen
 import com.allterra.presentation.splash.SplashScreen
 import com.allterra.presentation.theme.AllterraTheme
 import com.allterra.presentation.theme.ThemePreviewScreen
+import com.allterra.presentation.trips.TripsScreen
 import com.allterra.presentation.wallet.*
 import com.allterra.presentation.common.components.redesign.AllterraSheet
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -96,6 +97,14 @@ fun App() {
                             val routesState by routesViewModel.state.collectAsStateWithLifecycle()
                             val poisState by poisViewModel.state.collectAsStateWithLifecycle()
                             val profileState by profileViewModel.state.collectAsStateWithLifecycle()
+                            var showRoutesLibrary by remember { mutableStateOf(false) }
+                            val walletItems = remember {
+                                listOf(
+                                    WalletItem("1", "Flight to Zakopane", "LO 3821 · May 15", WalletCategory.TICKET, "2026-05-15"),
+                                    WalletItem("2", "Grand Hotel Booking", "2 nights · 2 guests", WalletCategory.BOOKING, "2026-05-15"),
+                                    WalletItem("3", "Mountain Insurance", "Allianz Global · Active", WalletCategory.INSURANCE, "2026-05-20")
+                                )
+                            }
 
                             LaunchedEffect(rootState.stage) {
                                 feedViewModel.refresh()
@@ -121,23 +130,23 @@ fun App() {
 
                                     rootState.selectedMainTab == MainTab.FEED -> FeedScreen(viewModel = feedViewModel)
 
-                                    rootState.selectedMainTab == MainTab.TRIPS -> RoutesScreen(
+                                    rootState.selectedMainTab == MainTab.TRIPS -> TripsScreen(
+                                        routes = routesState.items,
+                                        walletItems = walletItems,
+                                        onOpenRouteLibrary = { showRoutesLibrary = true },
+                                        onOpenWallet = { rootViewModel.onMainTabSelected(MainTab.WALLET) },
+                                    )
+
+                                    rootState.selectedMainTab == MainTab.MAP && showRoutesLibrary -> RoutesScreen(
                                         viewModel = routesViewModel,
-                                        onBack = { rootViewModel.onMainTabSelected(MainTab.HOME) },
+                                        onBack = { showRoutesLibrary = false },
                                     )
 
                                     rootState.selectedMainTab == MainTab.MAP -> MapScreen(
-                                        onOpenRoutes = { rootViewModel.onMainTabSelected(MainTab.TRIPS) }
+                                        onOpenRoutes = { showRoutesLibrary = true }
                                     )
 
                                     rootState.selectedMainTab == MainTab.WALLET -> {
-                                        val walletItems = remember {
-                                            listOf(
-                                                WalletItem("1", "Flight to Zakopane", "LO 3821 · May 15", WalletCategory.TICKET, "2026-05-15"),
-                                                WalletItem("2", "Grand Hotel Booking", "2 nights · 2 guests", WalletCategory.BOOKING, "2026-05-15"),
-                                                WalletItem("3", "Mountain Insurance", "Allianz Global · Active", WalletCategory.INSURANCE, "2026-05-20")
-                                            )
-                                        }
                                         var showAddSheet by remember { mutableStateOf(false) }
                                         var selectedItem by remember { mutableStateOf<WalletItem?>(null) }
 
