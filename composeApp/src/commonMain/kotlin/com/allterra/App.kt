@@ -3,10 +3,9 @@ package com.allterra
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -38,10 +37,13 @@ import com.allterra.presentation.settings.SettingsScreen
 import com.allterra.presentation.splash.SplashScreen
 import com.allterra.presentation.theme.AllterraTheme
 import com.allterra.presentation.theme.ThemePreviewScreen
+import com.allterra.presentation.wallet.*
+import com.allterra.presentation.common.components.redesign.AllterraSheet
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Preview
 fun App() {
@@ -87,63 +89,95 @@ fun App() {
                         )
 
                         RootStage.MAIN -> Box(modifier = Modifier.fillMaxSize()) {
-                        val feedViewModel: FeedViewModel = koinViewModel()
-                        val profileViewModel: ProfileViewModel = koinViewModel()
-                        val poisViewModel: PoisViewModel = koinViewModel()
-                        val routesViewModel: RoutesViewModel = koinViewModel()
-                        val routesState by routesViewModel.state.collectAsStateWithLifecycle()
-                        val poisState by poisViewModel.state.collectAsStateWithLifecycle()
-                        val profileState by profileViewModel.state.collectAsStateWithLifecycle()
+                            val feedViewModel: FeedViewModel = koinViewModel()
+                            val profileViewModel: ProfileViewModel = koinViewModel()
+                            val poisViewModel: PoisViewModel = koinViewModel()
+                            val routesViewModel: RoutesViewModel = koinViewModel()
+                            val routesState by routesViewModel.state.collectAsStateWithLifecycle()
+                            val poisState by poisViewModel.state.collectAsStateWithLifecycle()
+                            val profileState by profileViewModel.state.collectAsStateWithLifecycle()
 
-                        LaunchedEffect(rootState.stage) {
-                            feedViewModel.refresh()
-                            profileViewModel.refresh()
-                            routesViewModel.refreshRoutes()
-                            poisViewModel.refreshPois()
-                        }
-
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            when {
-                                rootState.overlay == MainOverlay.POIS -> PoisScreen(
-                                    viewModel = poisViewModel,
-                                    onBack = rootViewModel::closeOverlay,
-                                )
-
-                                rootState.selectedMainTab == MainTab.HOME -> DashboardScreen(
-                                    userName = profileState.userName.ifBlank { "Explorer" },
-                                    onLogout = rootViewModel::onLogout,
-                                    onOpenPacking = {},
-                                    onNewPost = { rootViewModel.onMainTabSelected(MainTab.FEED) },
-                                    onAddDoc = { rootViewModel.onMainTabSelected(MainTab.WALLET) }
-                                )
-
-                                rootState.selectedMainTab == MainTab.FEED -> FeedScreen(viewModel = feedViewModel)
-
-                                rootState.selectedMainTab == MainTab.TRIPS -> RoutesScreen(
-                                    viewModel = routesViewModel,
-                                    onBack = { rootViewModel.onMainTabSelected(MainTab.HOME) },
-                                )
-
-                                rootState.selectedMainTab == MainTab.MAP -> MapScreen()
-
-                                rootState.selectedMainTab == MainTab.WALLET -> Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    androidx.compose.material3.Text("Wallet Coming Soon", style = AllterraTheme.typography.displayM)
-                                }
-
-                                else -> SettingsScreen()
+                            LaunchedEffect(rootState.stage) {
+                                feedViewModel.refresh()
+                                profileViewModel.refresh()
+                                routesViewModel.refreshRoutes()
+                                poisViewModel.refreshPois()
                             }
-                        }
 
-                        BottomTabBar(
-                            modifier = Modifier.align(Alignment.BottomCenter),
-                            selectedTab = rootState.selectedMainTab,
-                            strings = strings,
-                            onTabSelected = rootViewModel::onMainTabSelected,
-                        )
-                    }
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                when {
+                                    rootState.overlay == MainOverlay.POIS -> PoisScreen(
+                                        viewModel = poisViewModel,
+                                        onBack = rootViewModel::closeOverlay,
+                                    )
+
+                                    rootState.selectedMainTab == MainTab.HOME -> DashboardScreen(
+                                        userName = profileState.userName.ifBlank { "Explorer" },
+                                        onLogout = rootViewModel::onLogout,
+                                        onOpenPacking = {},
+                                        onNewPost = { rootViewModel.onMainTabSelected(MainTab.FEED) },
+                                        onAddDoc = { rootViewModel.onMainTabSelected(MainTab.WALLET) }
+                                    )
+
+                                    rootState.selectedMainTab == MainTab.FEED -> FeedScreen(viewModel = feedViewModel)
+
+                                    rootState.selectedMainTab == MainTab.TRIPS -> RoutesScreen(
+                                        viewModel = routesViewModel,
+                                        onBack = { rootViewModel.onMainTabSelected(MainTab.HOME) },
+                                    )
+
+                                    rootState.selectedMainTab == MainTab.MAP -> MapScreen()
+
+                                    rootState.selectedMainTab == MainTab.WALLET -> {
+                                        val walletItems = remember {
+                                            listOf(
+                                                WalletItem("1", "Flight to Zakopane", "LO 3821 · May 15", WalletCategory.TICKET, "2026-05-15"),
+                                                WalletItem("2", "Grand Hotel Booking", "2 nights · 2 guests", WalletCategory.BOOKING, "2026-05-15"),
+                                                WalletItem("3", "Mountain Insurance", "Allianz Global · Active", WalletCategory.INSURANCE, "2026-05-20")
+                                            )
+                                        }
+                                        var showAddSheet by remember { mutableStateOf(false) }
+                                        var selectedItem by remember { mutableStateOf<WalletItem?>(null) }
+
+                                        WalletScreen(
+                                            items = walletItems,
+                                            onAddItem = { showAddSheet = true },
+                                            onItemClick = { selectedItem = it }
+                                        )
+
+                                        if (showAddSheet) {
+                                            AllterraSheet(onDismiss = { showAddSheet = false }) {
+                                                WalletAddSheet(
+                                                    onImportPDF = { showAddSheet = false },
+                                                    onImportPhoto = { showAddSheet = false },
+                                                    onImportEmail = { showAddSheet = false },
+                                                    onScan = { showAddSheet = false }
+                                                )
+                                            }
+                                        }
+
+                                        if (selectedItem != null) {
+                                            AllterraSheet(onDismiss = { selectedItem = null }) {
+                                                WalletItemViewer(
+                                                    item = selectedItem!!,
+                                                    onOpenOriginal = { selectedItem = null },
+                                                    onShare = { selectedItem = null }
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    else -> SettingsScreen()
+                                }
+                            }
+
+                            BottomTabBar(
+                                modifier = Modifier.align(Alignment.BottomCenter),
+                                selectedTab = rootState.selectedMainTab,
+                                strings = strings,
+                                onTabSelected = rootViewModel::onMainTabSelected,
+                            )
+                        }
                     }
                 }
             }
