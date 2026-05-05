@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.allterra.presentation.common.components.redesign.*
+import com.allterra.presentation.localization.appStrings
 import com.allterra.presentation.theme.AllterraTheme
 
 @Composable
@@ -28,10 +29,12 @@ fun DashboardScreen(
     onNewPost: () -> Unit,
     onAddDoc: () -> Unit
 ) {
+    val strings = appStrings()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AllterraTheme.colors.bg)
+            .background(AllterraTheme.colors.bgSub)
             .verticalScroll(rememberScrollState())
             .padding(AllterraTheme.spacing.screenPaddingX)
     ) {
@@ -43,12 +46,12 @@ fun DashboardScreen(
         ) {
             Column {
                 Text(
-                    text = "Hello, $userName",
+                    text = "${strings.dashboardGreetingPrefix}, $userName",
                     style = AllterraTheme.typography.displayM,
                     color = AllterraTheme.colors.ink
                 )
                 Text(
-                    text = "Ready for the next adventure?",
+                    text = strings.dashboardGreetingBody,
                     style = AllterraTheme.typography.body,
                     color = AllterraTheme.colors.muted
                 )
@@ -60,7 +63,7 @@ fun DashboardScreen(
 
         // Upcoming Trip
         Text(
-            text = "Upcoming Trip",
+            text = strings.dashboardUpcomingTrip,
             style = AllterraTheme.typography.caption,
             color = AllterraTheme.colors.muted
         )
@@ -82,7 +85,7 @@ fun DashboardScreen(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                Text("Packing progress", style = AllterraTheme.typography.caption)
+                Text(strings.dashboardPackingProgress, style = AllterraTheme.typography.caption)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AllterraProgressBar(progress = 0.65f, modifier = Modifier.weight(1f))
@@ -95,7 +98,7 @@ fun DashboardScreen(
 
         // Quick Actions
         Text(
-            text = "Quick Actions",
+            text = strings.dashboardQuickActions,
             style = AllterraTheme.typography.caption,
             color = AllterraTheme.colors.muted
         )
@@ -103,19 +106,19 @@ fun DashboardScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             QuickActionItem(
                 icon = Icons.Outlined.Inventory,
-                label = "Packing",
+                label = strings.dashboardPackingAction,
                 modifier = Modifier.weight(1f),
                 onClick = onOpenPacking
             )
             QuickActionItem(
                 icon = Icons.Outlined.PostAdd,
-                label = "New Post",
+                label = strings.dashboardNewPostAction,
                 modifier = Modifier.weight(1f),
                 onClick = onNewPost
             )
             QuickActionItem(
                 icon = Icons.Outlined.Add,
-                label = "Add Doc",
+                label = strings.dashboardAddDocAction,
                 modifier = Modifier.weight(1f),
                 onClick = onAddDoc
             )
@@ -130,11 +133,11 @@ fun DashboardScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Recent Trips",
+                text = strings.dashboardRecentTrips,
                 style = AllterraTheme.typography.caption,
                 color = AllterraTheme.colors.muted
             )
-            Text("See all", style = AllterraTheme.typography.tab, color = AllterraTheme.colors.moss)
+            Text(strings.dashboardSeeAll, style = AllterraTheme.typography.tab, color = AllterraTheme.colors.moss)
         }
         Spacer(modifier = Modifier.height(8.dp))
         LazyRow(
@@ -156,7 +159,7 @@ fun DashboardScreen(
         Spacer(modifier = Modifier.height(40.dp))
         
         AllterraButton(
-            text = "Logout",
+            text = strings.logoutAction,
             variant = AllterraButtonVariant.Ghost,
             modifier = Modifier.fillMaxWidth(),
             onClick = onLogout

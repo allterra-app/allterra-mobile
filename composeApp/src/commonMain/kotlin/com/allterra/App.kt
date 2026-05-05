@@ -126,7 +126,9 @@ fun App() {
                                         onBack = { rootViewModel.onMainTabSelected(MainTab.HOME) },
                                     )
 
-                                    rootState.selectedMainTab == MainTab.MAP -> MapScreen()
+                                    rootState.selectedMainTab == MainTab.MAP -> MapScreen(
+                                        onOpenRoutes = { rootViewModel.onMainTabSelected(MainTab.TRIPS) }
+                                    )
 
                                     rootState.selectedMainTab == MainTab.WALLET -> {
                                         val walletItems = remember {
@@ -151,7 +153,9 @@ fun App() {
                                                     onImportPDF = { showAddSheet = false },
                                                     onImportPhoto = { showAddSheet = false },
                                                     onImportEmail = { showAddSheet = false },
-                                                    onScan = { showAddSheet = false }
+                                                    onScan = { showAddSheet = false },
+                                                    onManual = { showAddSheet = false },
+                                                    onWalletPass = { showAddSheet = false },
                                                 )
                                             }
                                         }
@@ -189,6 +193,7 @@ private fun AppLanguage.next(): AppLanguage {
     return when (this) {
         AppLanguage.EN -> AppLanguage.RU
         AppLanguage.RU -> AppLanguage.PL
-        AppLanguage.PL -> AppLanguage.EN
+        AppLanguage.PL -> AppLanguage.DE
+        AppLanguage.DE -> AppLanguage.EN
     }
 }

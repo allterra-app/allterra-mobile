@@ -215,15 +215,15 @@ data class AllterraElevation(
 )
 
 val LightElevation = AllterraElevation(
-    sh1 = "sh1_light", // Placeholder for elevation implementation
-    sh2 = "sh2_light",
-    sh3 = "sh3_light"
+    sh1 = "0 1px 2px rgba(28,29,26,0.05), 0 2px 6px rgba(28,29,26,0.04)",
+    sh2 = "0 2px 8px rgba(28,29,26,0.06), 0 8px 24px rgba(28,29,26,0.06)",
+    sh3 = "0 8px 28px rgba(28,29,26,0.12), 0 16px 48px rgba(28,29,26,0.08)"
 )
 
 val DarkElevation = AllterraElevation(
-    sh1 = "sh1_dark",
-    sh2 = "sh2_dark",
-    sh3 = "sh3_dark"
+    sh1 = "0 1px 2px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.3)",
+    sh2 = "0 2px 8px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.4)",
+    sh3 = "0 8px 28px rgba(0,0,0,0.6), 0 16px 48px rgba(0,0,0,0.4)"
 )
 
 val LocalAllterraColors = staticCompositionLocalOf<AllterraColors> {

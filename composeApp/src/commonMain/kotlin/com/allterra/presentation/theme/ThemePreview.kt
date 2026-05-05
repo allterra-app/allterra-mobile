@@ -87,6 +87,17 @@ fun ThemePreviewScreen() {
                 AllterraChip("Route", categorical = AllterraTheme.categorical.route)
             }
         }
+
+        Divider()
+
+        Section("Selection") {
+            var checked by remember { mutableStateOf(true) }
+            var toggled by remember { mutableStateOf(true) }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                AllterraCheckbox(checked = checked, onCheckedChange = { checked = it })
+                AllterraToggle(checked = toggled, onCheckedChange = { toggled = it })
+            }
+        }
     }
 }
 

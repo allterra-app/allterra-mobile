@@ -21,7 +21,8 @@ fun AllterraInput(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "",
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    singleLine: Boolean = true,
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val borderColor = if (isFocused) AllterraTheme.colors.moss else AllterraTheme.colors.line2
@@ -30,11 +31,12 @@ fun AllterraInput(
         value = value,
         onValueChange = onValueChange,
         enabled = enabled,
+        singleLine = singleLine,
         textStyle = AllterraTheme.typography.body.copy(color = AllterraTheme.colors.ink),
         cursorBrush = SolidColor(AllterraTheme.colors.moss),
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(if (singleLine) 48.dp else 96.dp)
             .onFocusChanged { isFocused = it.isFocused }
             .clip(RoundedCornerShape(AllterraTheme.radius.btn))
             .background(AllterraTheme.colors.surface)

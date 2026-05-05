@@ -3,6 +3,12 @@ package com.allterra.presentation.onboarding
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.Groups
+import androidx.compose.material.icons.outlined.Hiking
+import androidx.compose.material.icons.outlined.Inventory2
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.allterra.presentation.common.components.redesign.AllterraButton
 import com.allterra.presentation.common.components.redesign.AllterraButtonVariant
+import com.allterra.presentation.localization.appStrings
 import com.allterra.presentation.theme.AllterraTheme
 import com.allterra.presentation.theme.CategoricalColor
 
@@ -35,6 +42,8 @@ fun OnboardingScreen(onCompleted: () -> Unit) {
 
 @Composable
 fun OnboardingOverview(onStart: () -> Unit) {
+    val strings = appStrings()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -45,14 +54,14 @@ fun OnboardingOverview(onStart: () -> Unit) {
         Spacer(modifier = Modifier.height(60.dp))
         
         Text(
-            text = "Welcome to Allterra",
+            text = strings.onboardingTitle,
             style = AllterraTheme.typography.displayXL,
             color = AllterraTheme.colors.ink,
             textAlign = TextAlign.Center
         )
         
         Text(
-            text = "Your digital companion for every trip.",
+            text = strings.onboardingSubtitle,
             style = AllterraTheme.typography.body,
             color = AllterraTheme.colors.muted,
             textAlign = TextAlign.Center,
@@ -64,19 +73,19 @@ fun OnboardingOverview(onStart: () -> Unit) {
         // 2x2 Grid of features
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                FeatureCard("Wallet", AllterraTheme.categorical.wallet, Modifier.weight(1f))
-                FeatureCard("Map", AllterraTheme.categorical.route, Modifier.weight(1f))
+                FeatureCard(strings.tabWallet, AllterraTheme.categorical.wallet, Icons.Outlined.AccountBalanceWallet, Modifier.weight(1f))
+                FeatureCard(strings.tabMap, AllterraTheme.categorical.route, Icons.Outlined.Hiking, Modifier.weight(1f))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                FeatureCard("Gear", AllterraTheme.categorical.gear, Modifier.weight(1f))
-                FeatureCard("Social", AllterraTheme.categorical.social, Modifier.weight(1f))
+                FeatureCard(strings.wardrobeAction, AllterraTheme.categorical.gear, Icons.Outlined.Inventory2, Modifier.weight(1f))
+                FeatureCard(strings.tabFeed, AllterraTheme.categorical.social, Icons.Outlined.Groups, Modifier.weight(1f))
             }
         }
 
         Spacer(modifier = Modifier.weight(1.5f))
 
         AllterraButton(
-            text = "Get Started",
+            text = strings.onboardingStartAction,
             modifier = Modifier.fillMaxWidth(),
             onClick = onStart
         )
@@ -86,7 +95,12 @@ fun OnboardingOverview(onStart: () -> Unit) {
 }
 
 @Composable
-private fun FeatureCard(title: String, categorical: CategoricalColor, modifier: Modifier = Modifier) {
+private fun FeatureCard(
+    title: String,
+    categorical: CategoricalColor,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
+) {
     Box(
         modifier = modifier
             .aspectRatio(1f)
@@ -95,27 +109,32 @@ private fun FeatureCard(title: String, categorical: CategoricalColor, modifier: 
             .padding(16.dp),
         contentAlignment = Alignment.BottomStart
     ) {
-        Text(
-            text = title,
-            style = AllterraTheme.typography.title,
-            color = categorical.ink
-        )
+        Column {
+            Icon(icon, contentDescription = null, tint = categorical.color, modifier = Modifier.size(34.dp))
+            Spacer(modifier = Modifier.height(18.dp))
+            Text(
+                text = title,
+                style = AllterraTheme.typography.title,
+                color = categorical.ink
+            )
+        }
     }
 }
 
 @Composable
 fun OnboardingStep(step: Int, onNext: () -> Unit, onSkip: () -> Unit) {
+    val strings = appStrings()
     val wallet = AllterraTheme.categorical.wallet
     val route = AllterraTheme.categorical.route
     val gear = AllterraTheme.categorical.gear
     val social = AllterraTheme.categorical.social
 
-    val data = remember(step, wallet, route, gear, social) {
+    val data = remember(step, strings, wallet, route, gear, social) {
         when (step) {
-            0 -> OnboardingData("Travel Wallet", "Aggregate all your PDFs, tickets, and bookings in one secure place.", wallet)
-            1 -> OnboardingData("Offline Maps", "Navigate trails and cities without worrying about internet connection.", route)
-            2 -> OnboardingData("Gear Tracking", "Manage your equipment, track wear, and never forget a piece of gear.", gear)
-            else -> OnboardingData("Share the Journey", "Join clubs, follow friends, and share your outdoor stories.", social)
+            0 -> OnboardingData(strings.onboardingWalletTitle, strings.onboardingWalletBody, wallet, Icons.Outlined.AccountBalanceWallet)
+            1 -> OnboardingData(strings.onboardingMapTitle, strings.onboardingMapBody, route, Icons.Outlined.Hiking)
+            2 -> OnboardingData(strings.onboardingGearTitle, strings.onboardingGearBody, gear, Icons.Outlined.Inventory2)
+            else -> OnboardingData(strings.onboardingSocialTitle, strings.onboardingSocialBody, social, Icons.Outlined.Groups)
         }
     }
 
@@ -128,13 +147,20 @@ fun OnboardingStep(step: Int, onNext: () -> Unit, onSkip: () -> Unit) {
     ) {
         Spacer(modifier = Modifier.height(100.dp))
         
-        // Placeholder for illustration
         Box(
             modifier = Modifier
                 .size(240.dp)
                 .clip(RoundedCornerShape(AllterraTheme.radius.xl))
-                .background(Color.White.copy(alpha = 0.5f))
-        )
+                .background(Color.White.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = data.icon,
+                contentDescription = null,
+                tint = data.categorical.color,
+                modifier = Modifier.size(96.dp),
+            )
+        }
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -172,13 +198,13 @@ fun OnboardingStep(step: Int, onNext: () -> Unit, onSkip: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             AllterraButton(
-                text = "Skip",
+                text = strings.onboardingSkipAction,
                 variant = AllterraButtonVariant.Ghost,
                 modifier = Modifier.weight(1f),
                 onClick = onSkip
             )
             AllterraButton(
-                text = if (step == 3) "Finish" else "Next",
+                text = if (step == 3) strings.onboardingFinishAction else strings.onboardingNextAction,
                 modifier = Modifier.weight(2f),
                 onClick = onNext
             )
@@ -191,5 +217,6 @@ fun OnboardingStep(step: Int, onNext: () -> Unit, onSkip: () -> Unit) {
 private data class OnboardingData(
     val title: String,
     val description: String,
-    val categorical: CategoricalColor
+    val categorical: CategoricalColor,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
 )

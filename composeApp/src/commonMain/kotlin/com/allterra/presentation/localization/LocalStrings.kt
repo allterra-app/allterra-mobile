@@ -17,5 +17,6 @@ fun languageDisplayName(language: AppLanguage, strings: AppStrings): String {
         AppLanguage.EN -> "English"
         AppLanguage.RU -> "Русский"
         AppLanguage.PL -> "Polski"
+        AppLanguage.DE -> "Deutsch"
     }
 }

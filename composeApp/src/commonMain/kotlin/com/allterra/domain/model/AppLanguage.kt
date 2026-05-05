@@ -3,7 +3,8 @@ package com.allterra.domain.model
 enum class AppLanguage(val code: String) {
     EN("en"),
     RU("ru"),
-    PL("pl");
+    PL("pl"),
+    DE("de");
 
     companion object {
         fun fromCode(raw: String?): AppLanguage {

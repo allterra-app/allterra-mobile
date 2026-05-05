@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.allterra.presentation.common.components.redesign.AllterraIconButton
+import com.allterra.presentation.localization.appStrings
 import com.allterra.presentation.theme.AllterraTheme
 
 @Composable
@@ -18,24 +19,31 @@ fun WalletAddSheet(
     onImportPDF: () -> Unit,
     onImportPhoto: () -> Unit,
     onImportEmail: () -> Unit,
-    onScan: () -> Unit
+    onScan: () -> Unit,
+    onManual: () -> Unit,
+    onWalletPass: () -> Unit,
 ) {
+    val strings = appStrings()
+
     Column {
         Text(
-            text = "Add to Wallet",
+            text = strings.walletAddTitle,
             style = AllterraTheme.typography.title,
             color = AllterraTheme.colors.ink,
             modifier = Modifier.padding(bottom = 24.dp)
         )
         
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            ImportOption(icon = Icons.Outlined.PictureAsPdf, label = "PDF", onClick = onImportPDF)
-            ImportOption(icon = Icons.Outlined.PhotoLibrary, label = "Photo", onClick = onImportPhoto)
-            ImportOption(icon = Icons.Outlined.Email, label = "Email", onClick = onImportEmail)
-            ImportOption(icon = Icons.Outlined.QrCodeScanner, label = "Scan", onClick = onScan)
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                ImportOption(icon = Icons.Outlined.PictureAsPdf, label = strings.walletImportPdf, onClick = onImportPDF)
+                ImportOption(icon = Icons.Outlined.PhotoLibrary, label = strings.walletImportPhoto, onClick = onImportPhoto)
+                ImportOption(icon = Icons.Outlined.Email, label = strings.walletImportEmail, onClick = onImportEmail)
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                ImportOption(icon = Icons.Outlined.QrCodeScanner, label = strings.walletImportScan, onClick = onScan)
+                ImportOption(icon = Icons.Outlined.EditNote, label = strings.walletImportManual, onClick = onManual)
+                ImportOption(icon = Icons.Outlined.AccountBalanceWallet, label = strings.walletImportPass, onClick = onWalletPass)
+            }
         }
     }
 }

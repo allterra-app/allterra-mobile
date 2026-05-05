@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.allterra.presentation.common.components.redesign.*
+import com.allterra.presentation.localization.appStrings
 import com.allterra.presentation.theme.AllterraTheme
 
 @Composable
@@ -23,6 +24,13 @@ fun WalletScreen(
     onItemClick: (WalletItem) -> Unit
 ) {
     val moss = AllterraTheme.categorical.wallet
+    val strings = appStrings()
+    val groups = listOf(
+        strings.walletTicketsGroup to items.filter { it.category == WalletCategory.TICKET },
+        strings.walletBookingsGroup to items.filter { it.category == WalletCategory.BOOKING },
+        strings.walletInsuranceGroup to items.filter { it.category == WalletCategory.INSURANCE },
+        strings.walletOtherGroup to items.filter { it.category == WalletCategory.ID || it.category == WalletCategory.OTHER },
+    ).filter { it.second.isNotEmpty() }
 
     Box(
         modifier = Modifier
@@ -46,20 +54,30 @@ fun WalletScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Travel Wallet",
+                        text = strings.walletTitle,
                         style = AllterraTheme.typography.displayM,
                         color = moss.ink
                     )
                     AllterraChip(
-                        text = "Offline Mode",
+                        text = strings.walletOfflineStatus,
                         categorical = moss
                     )
                 }
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            items(items) { item ->
-                WalletItemRow(item = item, onClick = { onItemClick(item) })
+            groups.forEach { (title, groupItems) ->
+                item {
+                    Text(
+                        text = title.uppercase(),
+                        style = AllterraTheme.typography.caption,
+                        color = moss.ink.copy(alpha = 0.72f),
+                        modifier = Modifier.padding(top = AllterraTheme.spacing.s2)
+                    )
+                }
+                items(groupItems) { item ->
+                    WalletItemRow(item = item, onClick = { onItemClick(item) })
+                }
             }
         }
 
@@ -73,7 +91,7 @@ fun WalletScreen(
                 onClick = onAddItem,
                 modifier = Modifier.size(56.dp)
             ) {
-                Icon(Icons.Outlined.Add, contentDescription = "Add Item", tint = AllterraTheme.colors.moss)
+                Icon(Icons.Outlined.Add, contentDescription = null, tint = AllterraTheme.colors.moss)
             }
         }
     }
@@ -122,12 +140,16 @@ fun WalletItemRow(
             }
 
             if (item.isOfflineAvailable) {
-                Icon(
-                    Icons.Outlined.FileDownloadDone,
-                    contentDescription = "Offline Available",
-                    tint = moss.color,
-                    modifier = Modifier.size(18.dp)
-                )
+                Column(horizontalAlignment = Alignment.End) {
+                    AllterraChip(text = item.status, categorical = moss)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Icon(
+                        Icons.Outlined.FileDownloadDone,
+                        contentDescription = null,
+                        tint = moss.color,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
         }
     }

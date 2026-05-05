@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,20 +56,27 @@ fun BottomTabBar(
         ) {
             MainTab.entries.forEach { tab ->
                 val selected = tab == selectedTab
-                val tint = if (selected) AllterraTheme.colors.moss else AllterraTheme.colors.muted2
+                val tint = if (selected) tab.accentColor() else AllterraTheme.colors.muted2
 
-                Box(
+                Column(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
                         .allterraClickable { onTabSelected(tab) },
-                    contentAlignment = Alignment.Center
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     Icon(
                         imageVector = tab.icon(),
                         contentDescription = tab.label(strings),
                         tint = tint,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Text(
+                        text = tab.label(strings),
+                        style = AllterraTheme.typography.tab,
+                        color = tint,
+                        maxLines = 1,
                     )
                 }
             }
@@ -87,12 +95,22 @@ private fun MainTab.icon(): androidx.compose.ui.graphics.vector.ImageVector {
 }
 
 fun MainTab.label(strings: AppStrings): String {
-    // Note: Temporary labels using existing strings or defaults
     return when (this) {
-        MainTab.HOME -> "Home"
+        MainTab.HOME -> strings.tabHome
         MainTab.FEED -> strings.tabFeed
         MainTab.MAP -> strings.tabMap
-        MainTab.WALLET -> "Wallet"
-        MainTab.TRIPS -> strings.tabRoutes
+        MainTab.WALLET -> strings.tabWallet
+        MainTab.TRIPS -> strings.tabTrips
+    }
+}
+
+@Composable
+private fun MainTab.accentColor(): Color {
+    return when (this) {
+        MainTab.HOME -> AllterraTheme.colors.moss
+        MainTab.FEED -> AllterraTheme.categorical.social.color
+        MainTab.MAP -> AllterraTheme.categorical.route.color
+        MainTab.WALLET -> AllterraTheme.categorical.wallet.color
+        MainTab.TRIPS -> AllterraTheme.categorical.route.color
     }
 }

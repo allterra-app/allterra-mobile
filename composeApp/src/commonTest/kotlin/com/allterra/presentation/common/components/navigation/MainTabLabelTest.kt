@@ -15,17 +15,17 @@ class MainTabLabelTest {
         assertEquals(strings.tabFeed, MainTab.FEED.label(strings))
         assertEquals(strings.tabMap, MainTab.MAP.label(strings))
         assertEquals("Wallet", MainTab.WALLET.label(strings))
-        assertEquals(strings.tabRoutes, MainTab.TRIPS.label(strings))
+        assertEquals("Trips", MainTab.TRIPS.label(strings))
     }
 
     @Test
     fun labels_matchLocalizationForRussian() {
         val strings = stringsFor(AppLanguage.RU)
 
-        assertEquals("Home", MainTab.HOME.label(strings))
+        assertEquals("Главная", MainTab.HOME.label(strings))
         assertEquals("Лента", MainTab.FEED.label(strings))
         assertEquals("Карта", MainTab.MAP.label(strings))
-        assertEquals("Wallet", MainTab.WALLET.label(strings))
-        assertEquals("Маршруты", MainTab.TRIPS.label(strings))
+        assertEquals("Кошелек", MainTab.WALLET.label(strings))
+        assertEquals("Выходы", MainTab.TRIPS.label(strings))
     }
 }

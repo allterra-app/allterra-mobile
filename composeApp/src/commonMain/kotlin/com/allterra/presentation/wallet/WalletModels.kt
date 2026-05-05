@@ -14,6 +14,9 @@ data class WalletItem(
     val subTitle: String,
     val category: WalletCategory,
     val date: String,
+    val time: String = "09:40",
+    val location: String = "Tatry, PL",
+    val status: String = "Ready",
     val isOfflineAvailable: Boolean = true,
     val qrCodeData: String? = null,
     val fileUrl: String? = null
