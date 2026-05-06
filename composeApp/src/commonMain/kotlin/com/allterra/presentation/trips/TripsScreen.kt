@@ -150,7 +150,7 @@ fun TripsScreen(
     onOpenRouteLibrary: () -> Unit,
     onOpenWallet: () -> Unit,
 ) {
-    val trips = remember(routes, walletItems) { sampleTrips(routes, walletItems) }
+    val trips = remember { emptyList<TripUiModel>() }
     var selectedFilter by remember { mutableStateOf(TripFilter.Planned) }
     var selectedTrip by remember { mutableStateOf<TripUiModel?>(null) }
     var showCreateSheet by remember { mutableStateOf(false) }
@@ -185,7 +185,6 @@ fun TripsScreen(
                     onClose = { showCreateSheet = false },
                     onCreateSuggestion = {
                         showCreateSheet = false
-                        selectedTrip = trips.first()
                     },
                 )
             }
@@ -264,7 +263,11 @@ private fun TripsListScreen(
             }
         }
 
-        if (filter == TripFilter.Active) {
+        if (filteredTrips.isEmpty()) {
+            item {
+                EmptyTripState(filter = filter, onCreateTrip = onCreateTrip)
+            }
+        } else if (filter == TripFilter.Active) {
             items(filteredTrips, key = { it.id }) { trip ->
                 ActiveTripBanner(trip = trip, onClick = { onTripClick(trip) })
             }
@@ -296,6 +299,41 @@ private fun TripsListScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyTripState(filter: TripFilter, onCreateTrip: () -> Unit) {
+    val strings = appStrings()
+    val title = when (filter) {
+        TripFilter.Planned -> strings.tripsEmptyPlannedTitle
+        TripFilter.Active -> strings.tripsEmptyActiveTitle
+        TripFilter.Done -> strings.tripsEmptyDoneTitle
+    }
+    val body = when (filter) {
+        TripFilter.Planned -> strings.tripsEmptyPlannedBody
+        TripFilter.Active -> strings.tripsEmptyActiveBody
+        TripFilter.Done -> strings.tripsEmptyDoneBody
+    }
+
+    AllterraCard(
+        modifier = Modifier.fillMaxWidth(),
+        backgroundColor = AllterraTheme.colors.surface,
+        borderColor = AllterraTheme.colors.line,
+        hasShadow = false,
+    ) {
+        Column {
+            Text(title, style = AllterraTheme.typography.title, color = AllterraTheme.colors.ink)
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(body, style = AllterraTheme.typography.small, color = AllterraTheme.colors.muted)
+            Spacer(modifier = Modifier.height(14.dp))
+            AllterraButton(
+                text = strings.tripsCreateAction,
+                isSmall = true,
+                variant = AllterraButtonVariant.Terra,
+                onClick = onCreateTrip,
+            )
         }
     }
 }
@@ -917,99 +955,6 @@ private data class SourceTile(
     val subtitle: String,
     val color: Color,
 )
-
-private fun sampleTrips(routes: List<RouteUiModel>, walletItems: List<WalletItem>): List<TripUiModel> {
-    val primaryRoute = routes.firstOrNull()
-    val backupRoute = routes.getOrNull(1) ?: primaryRoute
-    return listOf(
-        TripUiModel(
-            id = "tr1",
-            title = "Tatry - Rysy summit",
-            region = "Tatry, PL",
-            status = TripStatus.Planned,
-            dates = "20-22 Aug 2026",
-            daysLeft = 5,
-            members = listOf("MA", "PT", "JK"),
-            routeId = primaryRoute?.id,
-            distanceKm = primaryRoute?.distanceKm ?: 18.4,
-            elevationM = 1180,
-            durationLabel = "8:30",
-            docsCount = minOf(walletItems.size, 3),
-            gearCount = 16,
-            pinsCount = 7,
-            notesCount = 3,
-            readiness = TripReadiness(4, 4, 11, 16, routeReady = true, briefingReady = true),
-            budget = TripBudget(580, 900),
-            weatherLabel = "14C sun",
-            notes = listOf(
-                TripNote("Check forecast the night before", "Exposure gets serious after noon. Start by 06:00.", "yesterday", "MA"),
-                TripNote("Permit for Czarny Staw", "PTTK booking first, otherwise the queue gets ugly.", "3 days ago", "PT"),
-                TripNote("Backup descent option", "Via Dolina Roztoki if visibility collapses.", "last week", "JK"),
-            ),
-            waypoints = listOf(
-                TripWaypoint("Czarny Staw", "km 4.2 · 1583 m"),
-                TripWaypoint("Schronisko PTTK", "km 6.8 · 1410 m"),
-                TripWaypoint("Rysy summit", "km 12.0 · 2499 m"),
-            ),
-        ),
-        TripUiModel(
-            id = "tr2",
-            title = "Bieszczady weekend ridge",
-            region = "Bieszczady, PL",
-            status = TripStatus.Active,
-            dates = "live now",
-            members = listOf("MA", "PT"),
-            routeId = backupRoute?.id,
-            distanceKm = 27.0,
-            elevationM = 980,
-            durationLabel = "2 days",
-            docsCount = 2,
-            gearCount = 14,
-            pinsCount = 12,
-            notesCount = 6,
-            readiness = TripReadiness(2, 2, 14, 14, routeReady = true, briefingReady = true),
-            budget = TripBudget(340, 400),
-            weatherLabel = "11C cloud",
-            activeProgress = 0.52f,
-            activeDayLabel = "Day 2 · 14.2 / 27 km",
-            notes = listOf(
-                TripNote("Water refill", "Reliable source after the second saddle.", "today", "MA"),
-                TripNote("Wind rising", "Switch to the lower shelter if the ridge gets exposed.", "today", "PT"),
-            ),
-            waypoints = listOf(
-                TripWaypoint("Trailhead", "km 0.0 · 720 m"),
-                TripWaypoint("Ridge hut", "km 9.5 · 1180 m"),
-                TripWaypoint("Camp", "km 14.2 · 960 m"),
-            ),
-        ),
-        TripUiModel(
-            id = "tr3",
-            title = "Morskie Oko day hike",
-            region = "Tatry, PL",
-            status = TripStatus.Done,
-            dates = "30 Jul 2026",
-            members = listOf("MA", "PT", "JK"),
-            routeId = primaryRoute?.id,
-            distanceKm = 11.2,
-            elevationM = 620,
-            durationLabel = "5:00",
-            docsCount = 2,
-            gearCount = 12,
-            pinsCount = 9,
-            notesCount = 8,
-            readiness = TripReadiness(3, 3, 12, 12, routeReady = true, briefingReady = true),
-            budget = TripBudget(280, 320),
-            weatherLabel = "18C sun",
-            notes = listOf(
-                TripNote("Best light by the lake", "Golden hour was around 18:40 near the waterline.", "30 Jul", "JK"),
-            ),
-            waypoints = listOf(
-                TripWaypoint("Parking", "km 0.0 · 980 m"),
-                TripWaypoint("Morskie Oko", "km 8.1 · 1395 m"),
-            ),
-        ),
-    )
-}
 
 private fun TripReadiness.percent(): Int {
     val parts = listOf(

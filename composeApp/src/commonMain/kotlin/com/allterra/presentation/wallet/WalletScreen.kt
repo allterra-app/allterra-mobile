@@ -79,6 +79,38 @@ fun WalletScreen(
                     WalletItemRow(item = item, onClick = { onItemClick(item) })
                 }
             }
+
+            if (groups.isEmpty()) {
+                item {
+                    AllterraCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        backgroundColor = AllterraTheme.colors.surface,
+                        borderColor = AllterraTheme.colors.line,
+                        hasShadow = false,
+                    ) {
+                        Column {
+                            Text(
+                                text = strings.walletEmptyTitle,
+                                style = AllterraTheme.typography.title,
+                                color = AllterraTheme.colors.ink,
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = strings.walletEmptyBody,
+                                style = AllterraTheme.typography.small,
+                                color = AllterraTheme.colors.muted,
+                            )
+                            Spacer(modifier = Modifier.height(14.dp))
+                            AllterraButton(
+                                text = strings.walletEmptyAction,
+                                variant = AllterraButtonVariant.Primary,
+                                isSmall = true,
+                                onClick = onAddItem,
+                            )
+                        }
+                    }
+                }
+            }
         }
 
         // Floating Action Button

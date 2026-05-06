@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.MyLocation
-import androidx.compose.material.icons.outlined.Navigation
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
@@ -175,39 +174,23 @@ private fun ActiveRouteCard(modifier: Modifier, onOpenRoutes: () -> Unit) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "ACTIVE ROUTE", style = AllterraTheme.typography.caption, color = terra.color)
-                    Text(text = "Morskie Oko - Rysy", style = AllterraTheme.typography.title, color = AllterraTheme.colors.ink)
+                    Text(text = "ROUTES", style = AllterraTheme.typography.caption, color = terra.color)
+                    Text(text = "No active route", style = AllterraTheme.typography.title, color = AllterraTheme.colors.ink)
                 }
                 AllterraButton(
-                    text = "Start",
+                    text = "Open",
                     isSmall = true,
                     variant = AllterraButtonVariant.Terra,
-                    leadingIcon = { Icon(Icons.Outlined.Navigation, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp)) },
+                    leadingIcon = { Icon(Icons.Outlined.Route, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp)) },
                     onClick = onOpenRoutes,
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Text("4.2 / 18.4 km", style = AllterraTheme.typography.mono, color = AllterraTheme.colors.ink)
-                Text("+280 / 1180 m", style = AllterraTheme.typography.small, color = AllterraTheme.colors.muted)
-                Text("5:30 left", style = AllterraTheme.typography.small, color = AllterraTheme.colors.muted)
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(999.dp))
-                    .background(AllterraTheme.colors.line)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(0.23f)
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(terra.color)
-                )
-            }
+            Text(
+                text = "Saved routes will appear here when they are loaded from the route library.",
+                style = AllterraTheme.typography.small,
+                color = AllterraTheme.colors.muted,
+            )
         }
     }
 }

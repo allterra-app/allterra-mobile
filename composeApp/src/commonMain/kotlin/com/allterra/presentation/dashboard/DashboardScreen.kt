@@ -2,13 +2,10 @@ package com.allterra.presentation.dashboard
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Inventory
 import androidx.compose.material.icons.outlined.PostAdd
 import androidx.compose.material3.Icon
@@ -74,23 +71,11 @@ fun DashboardScreen(
         ) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    AllterraChip("In 3 days", categorical = AllterraTheme.categorical.route)
-                    Spacer(modifier = Modifier.weight(1f))
-                    Icon(Icons.Outlined.Cloud, contentDescription = null, tint = AllterraTheme.categorical.route.color)
-                    Text("12°C", style = AllterraTheme.typography.smallStrong, modifier = Modifier.padding(start = 4.dp))
+                    AllterraChip(strings.dashboardEmptyStateChip, categorical = AllterraTheme.categorical.route)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
-                Text("Tatra Mountains High Trail", style = AllterraTheme.typography.title)
-                Text("Zakopane, Poland", style = AllterraTheme.typography.small, color = AllterraTheme.colors.muted)
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text(strings.dashboardPackingProgress, style = AllterraTheme.typography.caption)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    AllterraProgressBar(progress = 0.65f, modifier = Modifier.weight(1f))
-                    Text("65%", style = AllterraTheme.typography.tab, modifier = Modifier.padding(start = 8.dp))
-                }
+                Text(strings.dashboardNoUpcomingTripTitle, style = AllterraTheme.typography.title)
+                Text(strings.dashboardNoUpcomingTripBody, style = AllterraTheme.typography.small, color = AllterraTheme.colors.muted)
             }
         }
 
@@ -140,19 +125,10 @@ fun DashboardScreen(
             Text(strings.dashboardSeeAll, style = AllterraTheme.typography.tab, color = AllterraTheme.colors.moss)
         }
         Spacer(modifier = Modifier.height(8.dp))
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(end = 18.dp)
-        ) {
-            items(listOf("Alps 2025", "Forest Hike", "River Kayaking")) { trip ->
-                AllterraCard(modifier = Modifier.width(140.dp)) {
-                    Column {
-                        Box(modifier = Modifier.fillMaxWidth().height(80.dp).background(AllterraTheme.colors.bgSub))
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(trip, style = AllterraTheme.typography.smallStrong)
-                        Text("Completed", style = AllterraTheme.typography.tab, color = AllterraTheme.colors.good)
-                    }
-                }
+        AllterraCard(modifier = Modifier.fillMaxWidth(), hasShadow = false) {
+            Column {
+                Text(strings.dashboardNoRecentTripsTitle, style = AllterraTheme.typography.bodyStrong)
+                Text(strings.dashboardNoRecentTripsBody, style = AllterraTheme.typography.small, color = AllterraTheme.colors.muted)
             }
         }
 

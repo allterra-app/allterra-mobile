@@ -98,13 +98,7 @@ fun App() {
                             val poisState by poisViewModel.state.collectAsStateWithLifecycle()
                             val profileState by profileViewModel.state.collectAsStateWithLifecycle()
                             var showRoutesLibrary by remember { mutableStateOf(false) }
-                            val walletItems = remember {
-                                listOf(
-                                    WalletItem("1", "Flight to Zakopane", "LO 3821 · May 15", WalletCategory.TICKET, "2026-05-15"),
-                                    WalletItem("2", "Grand Hotel Booking", "2 nights · 2 guests", WalletCategory.BOOKING, "2026-05-15"),
-                                    WalletItem("3", "Mountain Insurance", "Allianz Global · Active", WalletCategory.INSURANCE, "2026-05-20")
-                                )
-                            }
+                            val walletItems = remember { emptyList<WalletItem>() }
 
                             LaunchedEffect(rootState.stage) {
                                 feedViewModel.refresh()
