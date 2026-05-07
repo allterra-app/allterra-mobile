@@ -2,13 +2,10 @@ package com.allterra
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.allterra.di.appModule
 import com.allterra.domain.model.AppLanguage
@@ -24,7 +21,6 @@ import com.allterra.presentation.localization.stringsFor
 import com.allterra.presentation.map.MapScreen
 import com.allterra.presentation.pois.PoisScreen
 import com.allterra.presentation.pois.PoisViewModel
-import com.allterra.presentation.profile.ProfileScreen
 import com.allterra.presentation.profile.ProfileViewModel
 import com.allterra.presentation.onboarding.OnboardingScreen
 import com.allterra.presentation.dashboard.DashboardScreen
@@ -35,6 +31,7 @@ import com.allterra.presentation.routes.RoutesScreen
 import com.allterra.presentation.routes.RoutesViewModel
 import com.allterra.presentation.settings.SettingsScreen
 import com.allterra.presentation.splash.SplashScreen
+import com.allterra.presentation.theme.AllterraCategory
 import com.allterra.presentation.theme.AllterraTheme
 import com.allterra.presentation.theme.ThemePreviewScreen
 import com.allterra.presentation.trips.TripsScreen
@@ -61,7 +58,21 @@ fun App() {
             LocalAppLanguage provides rootState.language,
             LocalAppStrings provides strings,
         ) {
-            AllterraTheme {
+            val currentCategory: AllterraCategory = remember(rootState.selectedMainTab, rootState.stage) {
+                if (rootState.stage != RootStage.MAIN) {
+                    AllterraCategory.Neutral
+                } else {
+                    when (rootState.selectedMainTab) {
+                        MainTab.HOME -> AllterraCategory.Neutral
+                        MainTab.FEED -> AllterraCategory.Social
+                        MainTab.MAP -> AllterraCategory.Route
+                        MainTab.WALLET -> AllterraCategory.Wallet
+                        MainTab.TRIPS -> AllterraCategory.Route
+                    }
+                }
+            }
+
+            AllterraTheme(category = currentCategory) {
                 if (showThemePreview) {
                     ThemePreviewScreen()
                 } else {

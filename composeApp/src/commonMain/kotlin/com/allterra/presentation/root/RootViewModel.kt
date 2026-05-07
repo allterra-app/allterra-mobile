@@ -120,6 +120,20 @@ class RootViewModel(
         _state.update { it.copy(selectedMainTab = tab, overlay = MainOverlay.NONE, stage = RootStage.MAIN) }
     }
 
+    /**
+     * Unified navigation entry point equivalent to go({ tab, sub, id }) in the redesign.
+     */
+    fun navigateTo(tab: MainTab, sub: String? = null, id: String? = null) {
+        _state.update { 
+            it.copy(
+                selectedMainTab = tab, 
+                overlay = MainOverlay.NONE, 
+                stage = RootStage.MAIN
+                // Deep navigation logic for sub/id will be expanded in feature tasks
+            ) 
+        }
+    }
+
     fun openPoisFromProfile() {
         _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.HOME, overlay = MainOverlay.POIS) }
     }

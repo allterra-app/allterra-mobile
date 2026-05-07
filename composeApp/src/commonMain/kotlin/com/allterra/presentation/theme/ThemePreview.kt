@@ -49,6 +49,14 @@ fun ThemePreviewScreen() {
 
         Divider()
 
+        Section("Sunset Anchors") {
+            ColorRow("Midnight Family", listOf(AllterraTheme.colors.midnight, AllterraTheme.colors.midnight2, AllterraTheme.colors.midnight3))
+            ColorRow("Crimson Family", listOf(AllterraTheme.colors.crimson, AllterraTheme.colors.crimson2, AllterraTheme.colors.crimsonSoft))
+            ColorRow("Night Mode Surfaces", listOf(AllterraTheme.colors.nightBg, AllterraTheme.colors.nightSurface, AllterraTheme.colors.nightSurface2))
+        }
+
+        Divider()
+
         Section("Buttons") {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AllterraButton("Primary", modifier = Modifier.weight(1f)) {}
@@ -122,6 +130,18 @@ private fun Divider() {
 private fun TypographyRow(label: String, style: androidx.compose.ui.text.TextStyle) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
         Text(label, style = style, color = AllterraTheme.colors.ink)
+    }
+}
+
+@Composable
+private fun ColorRow(label: String, colors: List<androidx.compose.ui.graphics.Color>) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text(label, style = AllterraTheme.typography.bodyStrong, color = AllterraTheme.colors.ink)
+        Row(modifier = Modifier.fillMaxWidth().padding(top = 4.dp)) {
+            colors.forEach { color ->
+                Box(modifier = Modifier.weight(1f).height(24.dp).background(color))
+            }
+        }
     }
 }
 

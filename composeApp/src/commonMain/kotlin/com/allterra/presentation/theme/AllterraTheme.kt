@@ -8,11 +8,11 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.ui.text.TextStyle
 
 @Composable
 fun AllterraTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    category: AllterraCategory = AllterraCategory.Neutral,
     content: @Composable () -> Unit
 ) {
     val colors = if (darkTheme) DarkColors else LightColors
@@ -45,6 +45,7 @@ fun AllterraTheme(
     CompositionLocalProvider(
         LocalAllterraColors provides colors,
         LocalAllterraCategoricalColors provides categorical,
+        LocalAllterraCategory provides category,
         LocalAllterraTypography provides typography,
         LocalAllterraRadius provides AllterraRadius(),
         LocalAllterraSpacing provides AllterraSpacing(),
@@ -72,6 +73,22 @@ object AllterraTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalAllterraCategoricalColors.current
+
+    val category: AllterraCategory
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAllterraCategory.current
+
+    val currentCategoryColors: CategoricalColor
+        @Composable
+        @ReadOnlyComposable
+        get() = when (category) {
+            AllterraCategory.Wallet -> categorical.wallet
+            AllterraCategory.Route -> categorical.route
+            AllterraCategory.Gear -> categorical.gear
+            AllterraCategory.Social -> categorical.social
+            AllterraCategory.Neutral -> CategoricalColor(colors.ink, colors.ink2, colors.line, colors.ink)
+        }
 
     val typography: AllterraTypography
         @Composable

@@ -3,8 +3,6 @@ package com.allterra.presentation.common.components.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -86,11 +84,11 @@ fun BottomTabBar(
 
 private fun MainTab.icon(): androidx.compose.ui.graphics.vector.ImageVector {
     return when (this) {
-        MainTab.HOME -> Icons.Outlined.GridView
-        MainTab.FEED -> Icons.Outlined.DynamicFeed
-        MainTab.MAP -> Icons.Outlined.Map
-        MainTab.WALLET -> Icons.Outlined.AccountBalanceWallet
-        MainTab.TRIPS -> Icons.Outlined.Hiking
+        MainTab.HOME -> AllterraIcons.Home
+        MainTab.FEED -> AllterraIcons.Feed
+        MainTab.MAP -> AllterraIcons.Map
+        MainTab.WALLET -> AllterraIcons.Wallet
+        MainTab.TRIPS -> AllterraIcons.Route
     }
 }
 

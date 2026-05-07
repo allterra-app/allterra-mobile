@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.TextStyle
@@ -36,14 +35,27 @@ data class AllterraColors(
     val moss2: Color,
     val mossSoft: Color,
     val terra: Color,
+    val terra2: Color,
     val terraSoft: Color,
     val ochre: Color,
     val ochreSoft: Color,
     val sky: Color,
     val skySoft: Color,
+    val midnight: Color,
+    val midnight2: Color,
+    val midnight3: Color,
+    val crimson: Color,
+    val crimson2: Color,
+    val crimsonSoft: Color,
+    val nightBg: Color,
+    val nightSurface: Color,
+    val nightSurface2: Color,
     val good: Color,
     val warn: Color,
     val bad: Color,
+    val danger: Color,
+    val dangerSoft: Color,
+    val dangerOn: Color,
     val isLight: Boolean
 )
 
@@ -63,6 +75,10 @@ data class AllterraCategoricalColors(
     val social: CategoricalColor
 )
 
+enum class AllterraCategory { Wallet, Route, Gear, Social, Neutral }
+
+val LocalAllterraCategory = staticCompositionLocalOf { AllterraCategory.Neutral }
+
 val LightColors = AllterraColors(
     bg = Color(0xFFFAF8F3),
     bgSub = Color(0xFFF1EDE4),
@@ -77,15 +93,28 @@ val LightColors = AllterraColors(
     moss = Color(0xFF4A6B3A),
     moss2 = Color(0xFF5D8048),
     mossSoft = Color(0xFFE6EDE0),
-    terra = Color(0xFFB85A35),
-    terraSoft = Color(0xFFF5E2D6),
+    terra = Color(0xFFD97A55),
+    terra2 = Color(0xFFB85A35),
+    terraSoft = Color(0xFFFBE5D8),
     ochre = Color(0xFFC89B3C),
     ochreSoft = Color(0xFFF6EAD0),
     sky = Color(0xFF4D7589),
     skySoft = Color(0xFFDDE7EC),
+    midnight = Color(0xFF181A2F),
+    midnight2 = Color(0xFF242E49),
+    midnight3 = Color(0xFF37415C),
+    crimson = Color(0xFF54162B),
+    crimson2 = Color(0xFF6F1E3A),
+    crimsonSoft = Color(0x2454162B),
+    nightBg = Color(0xFF181A2F),
+    nightSurface = Color(0xFF242E49),
+    nightSurface2 = Color(0xFF37415C),
     good = Color(0xFF4A6B3A),
     warn = Color(0xFFC89B3C),
-    bad = Color(0xFFB85A35),
+    bad = Color(0xFF54162B),
+    danger = Color(0xFF54162B),
+    dangerSoft = Color(0x1F54162B),
+    dangerOn = Color(0xFF54162B),
     isLight = true
 )
 
@@ -102,16 +131,29 @@ val DarkColors = AllterraColors(
     line2 = Color(0x24F4F2EA),
     moss = Color(0xFF88A875),
     moss2 = Color(0xFFA3BF8E),
-    mossSoft = Color(0x2E88A875),
-    terra = Color(0xFFD97A55),
-    terraSoft = Color(0x2ED97A55),
+    mossSoft = Color(0x3388A875),
+    terra = Color(0xFFFDA481),
+    terra2 = Color(0xFFE89876),
+    terraSoft = Color(0x33FDA481),
     ochre = Color(0xFFE0B765),
-    ochreSoft = Color(0x2EE0B765),
-    sky = Color(0xFF7EA4B7),
-    skySoft = Color(0x2E7EA4B7),
+    ochreSoft = Color(0x33E0B765),
+    sky = Color(0xFF9EC0D2),
+    skySoft = Color(0x339EC0D2),
+    midnight = Color(0xFF181A2F),
+    midnight2 = Color(0xFF242E49),
+    midnight3 = Color(0xFF37415C),
+    crimson = Color(0xFFB4182D),
+    crimson2 = Color(0xFFEE9AA6),
+    crimsonSoft = Color(0x38B4182D),
+    nightBg = Color(0xFF181A2F),
+    nightSurface = Color(0xFF242E49),
+    nightSurface2 = Color(0xFF37415C),
     good = Color(0xFF88A875),
     warn = Color(0xFFE0B765),
-    bad = Color(0xFFD97A55),
+    bad = Color(0xFFB4182D),
+    danger = Color(0xFFB4182D),
+    dangerSoft = Color(0x38B4182D),
+    dangerOn = Color(0xFFEE9AA6),
     isLight = false
 )
 
