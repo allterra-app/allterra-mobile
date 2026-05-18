@@ -34,6 +34,7 @@ fun DashboardScreen(
     onOpenWallet: () -> Unit,
     onNewPost: () -> Unit,
     onOpenTripCreate: () -> Unit,
+    onOpenGear: () -> Unit,
     onOpenMap: () -> Unit,
     onSeeAllTrips: () -> Unit,
 ) {
@@ -160,12 +161,22 @@ fun DashboardScreen(
                     onClick = onOpenTripCreate
                 )
                 QuickActionItem(
+                    icon = AllterraIcons.Scales,
+                    label = "Gear",
+                    color = AllterraTheme.categorical.gear.color,
+                    modifier = Modifier.weight(1f),
+                    onClick = onOpenGear
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(AllterraTheme.spacing.s3)) {
+                QuickActionItem(
                     icon = AllterraIcons.Map,
                     label = "Map",
                     color = AllterraTheme.categorical.route.color,
                     modifier = Modifier.weight(1f),
                     onClick = onOpenMap
                 )
+                Spacer(modifier = Modifier.weight(1f))
             }
         }
 

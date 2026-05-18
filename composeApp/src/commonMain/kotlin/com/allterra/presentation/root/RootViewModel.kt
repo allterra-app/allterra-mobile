@@ -33,6 +33,7 @@ enum class MainOverlay {
     PROFILE,
     WALLET_ADD,
     WALLET_VIEW,
+    GEAR_INVENTORY,
 }
 
 data class RootUiState(
@@ -165,6 +166,10 @@ class RootViewModel(
 
     fun openWardrobePlaceholder() {
         _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.HOME, overlay = MainOverlay.NONE) }
+    }
+
+    fun openGearInventory() {
+        _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.HOME, overlay = MainOverlay.GEAR_INVENTORY) }
     }
 
     fun closeOverlay() {

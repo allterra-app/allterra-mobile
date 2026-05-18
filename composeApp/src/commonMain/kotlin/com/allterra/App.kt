@@ -20,6 +20,8 @@ import com.allterra.presentation.common.components.redesign.AllterraSheet
 import com.allterra.presentation.dashboard.DashboardScreen
 import com.allterra.presentation.feed.FeedScreen
 import com.allterra.presentation.feed.FeedViewModel
+import com.allterra.presentation.gear.GearInventoryScreen
+import com.allterra.presentation.gear.GearViewModel
 import com.allterra.presentation.localization.LocalAppLanguage
 import com.allterra.presentation.localization.LocalAppStrings
 import com.allterra.presentation.localization.stringsFor
@@ -107,6 +109,7 @@ fun App() {
                             val routesViewModel: RoutesViewModel = koinViewModel()
                             val walletViewModel: WalletViewModel = koinViewModel()
                             val tripViewModel: TripViewModel = koinViewModel()
+                            val gearViewModel: GearViewModel = koinViewModel()
 
                             val routesState by routesViewModel.state.collectAsStateWithLifecycle()
                             val poisState by poisViewModel.state.collectAsStateWithLifecycle()
@@ -132,6 +135,11 @@ fun App() {
 
                                     rootState.overlay == MainOverlay.SETTINGS -> SettingsScreen(
                                         onLogout = rootViewModel::onLogout,
+                                        onBack = rootViewModel::closeOverlay
+                                    )
+
+                                    rootState.overlay == MainOverlay.GEAR_INVENTORY -> GearInventoryScreen(
+                                        viewModel = gearViewModel,
                                         onBack = rootViewModel::closeOverlay
                                     )
 
@@ -173,6 +181,7 @@ fun App() {
                                         onOpenWallet = { rootViewModel.onMainTabSelected(MainTab.WALLET) },
                                         onNewPost = { rootViewModel.onMainTabSelected(MainTab.FEED) },
                                         onOpenTripCreate = { rootViewModel.onMainTabSelected(MainTab.TRIPS) },
+                                        onOpenGear = rootViewModel::openGearInventory,
                                         onOpenMap = { rootViewModel.onMainTabSelected(MainTab.MAP) },
                                         onSeeAllTrips = { rootViewModel.onMainTabSelected(MainTab.TRIPS) }
                                     )

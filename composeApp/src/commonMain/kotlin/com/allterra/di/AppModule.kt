@@ -12,6 +12,7 @@ import com.allterra.network.auth.AuthApi
 import com.allterra.network.auth.AuthApiImpl
 import com.allterra.network.createHttpClient
 import com.allterra.network.document.DocumentApi
+import com.allterra.network.gear.GearApi
 import com.allterra.network.media.MediaApi
 import com.allterra.network.media.MediaApiImpl
 import com.allterra.network.poi.PoiApi
@@ -29,6 +30,7 @@ import com.allterra.network.user.UserApi
 import com.allterra.network.user.UserApiImpl
 import com.allterra.presentation.auth.AuthViewModel
 import com.allterra.presentation.feed.FeedViewModel
+import com.allterra.presentation.gear.GearViewModel
 import com.allterra.presentation.pois.PoisViewModel
 import com.allterra.presentation.profile.ProfileViewModel
 import com.allterra.presentation.root.RootViewModel
@@ -44,6 +46,7 @@ val appModule = module {
     single<UserApi> { UserApiImpl(httpClient = get(), tokenStorage = get()) }
     single { DocumentApi(httpClient = get(), tokenStorage = get()) }
     single { TripApi(httpClient = get(), tokenStorage = get()) }
+    single { GearApi(httpClient = get(), tokenStorage = get()) }
     single<RouteApi> { RouteApiImpl(httpClient = get(), tokenStorage = get()) }
     single<PoiApi> { PoiApiImpl(httpClient = get(), tokenStorage = get()) }
     single<PoiPhotoApi> { PoiPhotoApiImpl(httpClient = get(), tokenStorage = get()) }
@@ -57,6 +60,7 @@ val appModule = module {
     single<PoisRepository> { PoisRepositoryImpl(userApi = get(), poiApi = get(), poiPhotoApi = get(), mediaApi = get()) }
     single<WalletRepository> { WalletRepositoryImpl(api = get()) }
     single<TripRepository> { TripRepositoryImpl(api = get()) }
+    single<GearRepository> { GearRepositoryImpl(api = get()) }
     single<PostsRepository> {
         PostsRepositoryImpl(
             userApi = get(),
@@ -89,4 +93,5 @@ val appModule = module {
     viewModel { RoutesViewModel(routesRepository = get()) }
     viewModel { WalletViewModel(repository = get()) }
     viewModel { TripViewModel(repository = get()) }
+    viewModel { GearViewModel(repository = get()) }
 }
