@@ -4,15 +4,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.FileDownloadDone
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.allterra.presentation.common.components.navigation.AllterraIcons
 import com.allterra.presentation.common.components.redesign.*
 import com.allterra.presentation.localization.appStrings
 import com.allterra.presentation.theme.AllterraTheme
@@ -23,166 +30,208 @@ fun WalletScreen(
     onAddItem: () -> Unit,
     onItemClick: (WalletItem) -> Unit
 ) {
-    val moss = AllterraTheme.categorical.wallet
     val strings = appStrings()
-    val groups = listOf(
-        strings.walletTicketsGroup to items.filter { it.category == WalletCategory.TICKET },
-        strings.walletBookingsGroup to items.filter { it.category == WalletCategory.BOOKING },
-        strings.walletInsuranceGroup to items.filter { it.category == WalletCategory.INSURANCE },
-        strings.walletOtherGroup to items.filter { it.category == WalletCategory.ID || it.category == WalletCategory.OTHER },
-    ).filter { it.second.isNotEmpty() }
+    var selectedCategory by remember { mutableStateOf(WalletCategory.ALL) }
+    
+    val filteredItems = remember(items, selectedCategory) {
+        if (selectedCategory == WalletCategory.ALL) items
+        else items.filter { item ->
+            when (selectedCategory) {
+                WalletCategory.TRANSPORT -> item.type == DocumentType.TICKET
+                WalletCategory.STAY -> item.type == DocumentType.BOOKING
+                WalletCategory.DOCS -> item.type == DocumentType.INSURANCE || item.type == DocumentType.OTHER
+                else -> true
+            }
+        }
+    }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(moss.soft)
+            .background(AllterraTheme.colors.bg)
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = AllterraTheme.spacing.screenPaddingX,
-                end = AllterraTheme.spacing.screenPaddingX,
-                top = 24.dp,
-                bottom = 100.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(AllterraTheme.spacing.s3)
+        // Appbar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = AllterraTheme.spacing.screenPaddingX)
+                .padding(top = 24.dp, bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = strings.walletTitle,
-                        style = AllterraTheme.typography.displayM,
-                        color = moss.ink
-                    )
-                    AllterraChip(
-                        text = strings.walletOfflineStatus,
-                        categorical = moss
-                    )
+            Text(strings.walletTitle, style = AllterraTheme.typography.displayM, color = AllterraTheme.colors.ink)
+            Row {
+                AllterraIconButton(onClick = {}) {
+                    Icon(Icons.Outlined.Search, contentDescription = null, tint = AllterraTheme.colors.ink)
                 }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            groups.forEach { (title, groupItems) ->
-                item {
-                    Text(
-                        text = title.uppercase(),
-                        style = AllterraTheme.typography.caption,
-                        color = moss.ink.copy(alpha = 0.72f),
-                        modifier = Modifier.padding(top = AllterraTheme.spacing.s2)
-                    )
-                }
-                items(groupItems) { item ->
-                    WalletItemRow(item = item, onClick = { onItemClick(item) })
-                }
-            }
-
-            if (groups.isEmpty()) {
-                item {
-                    AllterraCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = AllterraTheme.colors.surface,
-                        borderColor = AllterraTheme.colors.line,
-                        hasShadow = false,
-                    ) {
-                        Column {
-                            Text(
-                                text = strings.walletEmptyTitle,
-                                style = AllterraTheme.typography.title,
-                                color = AllterraTheme.colors.ink,
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(
-                                text = strings.walletEmptyBody,
-                                style = AllterraTheme.typography.small,
-                                color = AllterraTheme.colors.muted,
-                            )
-                            Spacer(modifier = Modifier.height(14.dp))
-                            AllterraButton(
-                                text = strings.walletEmptyAction,
-                                variant = AllterraButtonVariant.Primary,
-                                isSmall = true,
-                                onClick = onAddItem,
-                            )
-                        }
-                    }
+                Spacer(modifier = Modifier.width(8.dp))
+                AllterraIconButton(onClick = onAddItem) {
+                    Icon(Icons.Outlined.Add, contentDescription = null, tint = AllterraTheme.colors.moss)
                 }
             }
         }
 
-        // Floating Action Button
-        Box(
+        // Stats Row
+        Row(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 110.dp, end = 24.dp)
+                .padding(horizontal = AllterraTheme.spacing.screenPaddingX)
+                .padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            AllterraIconButton(
-                onClick = onAddItem,
-                modifier = Modifier.size(56.dp)
+            Text(
+                text = "${items.size} documents · ${items.count { it.isOffline }} offline",
+                style = AllterraTheme.typography.small,
+                color = AllterraTheme.colors.muted
+            )
+        }
+
+        // Tabs
+        ScrollableTabRow(
+            selectedTabIndex = selectedCategory.ordinal,
+            containerColor = Color.Transparent,
+            contentColor = AllterraTheme.colors.moss,
+            divider = {},
+            indicator = {},
+            edgePadding = AllterraTheme.spacing.screenPaddingX
+        ) {
+            WalletCategory.entries.forEach { category ->
+                val selected = selectedCategory == category
+                Tab(
+                    selected = selected,
+                    onClick = { selectedCategory = category },
+                    text = {
+                        Text(
+                            text = category.name.lowercase().capitalize(),
+                            style = if (selected) AllterraTheme.typography.bodyStrong else AllterraTheme.typography.body,
+                            color = if (selected) AllterraTheme.colors.moss else AllterraTheme.colors.muted
+                        )
+                    }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (filteredItems.isEmpty()) {
+            WalletEmptyState(onAddItem)
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = AllterraTheme.spacing.screenPaddingX,
+                    end = AllterraTheme.spacing.screenPaddingX,
+                    bottom = 100.dp
+                ),
+                horizontalArrangement = Arrangement.spacedBy(AllterraTheme.spacing.s3),
+                verticalArrangement = Arrangement.spacedBy(AllterraTheme.spacing.s3)
             ) {
-                Icon(Icons.Outlined.Add, contentDescription = null, tint = AllterraTheme.colors.moss)
+                items(filteredItems) { item ->
+                    DocumentCard(item = item, onClick = { onItemClick(item) })
+                }
             }
         }
     }
 }
 
 @Composable
-fun WalletItemRow(
-    item: WalletItem,
-    onClick: () -> Unit
-) {
+private fun DocumentCard(item: WalletItem, onClick: () -> Unit) {
     val moss = AllterraTheme.categorical.wallet
-
-    AllterraCard(
-        modifier = Modifier.fillMaxWidth().allterraClickable { onClick() },
-        backgroundColor = AllterraTheme.colors.surface,
-        borderColor = AllterraTheme.colors.line
+    
+    Box(
+        modifier = Modifier
+            .aspectRatio(0.8f)
+            .shadow(2.dp, RoundedCornerShape(AllterraTheme.radius.md))
+            .clip(RoundedCornerShape(AllterraTheme.radius.md))
+            .background(AllterraTheme.colors.surface)
+            .allterraClickable { onClick() }
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Column {
+            // Preview / Type Icon area
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .background(moss.soft, androidx.compose.foundation.shape.CircleShape),
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .background(moss.soft),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = item.category.icon(),
+                    imageVector = item.type.icon(),
                     contentDescription = null,
                     tint = moss.color,
-                    modifier = Modifier.size(22.dp)
+                    modifier = Modifier.size(40.dp)
                 )
+                
+                // Offline dot
+                if (item.isOffline) {
+                    Box(
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(AllterraTheme.colors.good)
+                            .align(Alignment.TopEnd)
+                    )
+                }
             }
             
+            // Info area
             Column(
-                modifier = Modifier.padding(start = 14.dp).weight(1f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AllterraTheme.spacing.s3)
             ) {
                 Text(
                     text = item.title,
                     style = AllterraTheme.typography.bodyStrong,
-                    color = AllterraTheme.colors.ink
+                    color = AllterraTheme.colors.ink,
+                    maxLines = 1
                 )
                 Text(
-                    text = item.subTitle,
+                    text = item.date,
                     style = AllterraTheme.typography.small,
                     color = AllterraTheme.colors.muted
                 )
-            }
-
-            if (item.isOfflineAvailable) {
-                Column(horizontalAlignment = Alignment.End) {
-                    AllterraChip(text = item.status, categorical = moss)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Icon(
-                        Icons.Outlined.FileDownloadDone,
-                        contentDescription = null,
-                        tint = moss.color,
-                        modifier = Modifier.size(18.dp)
+                if (item.tripName != null) {
+                    Text(
+                        text = item.tripName,
+                        style = AllterraTheme.typography.caption,
+                        color = moss.color,
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                 }
             }
         }
     }
 }
+
+@Composable
+private fun WalletEmptyState(onAddItem: () -> Unit) {
+    val strings = appStrings()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(AllterraTheme.spacing.screenPaddingX),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            AllterraIcons.Wallet,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = AllterraTheme.colors.line2
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(strings.walletEmptyTitle, style = AllterraTheme.typography.title, textAlign = TextAlign.Center)
+        Text(
+            strings.walletEmptyBody,
+            style = AllterraTheme.typography.body,
+            color = AllterraTheme.colors.muted,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
+        )
+        AllterraButton(text = strings.walletEmptyAction, onClick = onAddItem)
+    }
+}
+
+private fun String.capitalize() = replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }

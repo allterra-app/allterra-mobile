@@ -1,33 +1,32 @@
 package com.allterra.presentation.wallet
 
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.*
+import com.allterra.presentation.common.components.navigation.AllterraIcons
 
 enum class WalletCategory {
-    TICKET, BOOKING, INSURANCE, ID, OTHER
+    ALL, TRANSPORT, STAY, DOCS
+}
+
+enum class DocumentType {
+    TICKET, BOOKING, INSURANCE, OTHER;
+    
+    fun icon(): androidx.compose.ui.graphics.vector.ImageVector {
+        return when (this) {
+            TICKET -> AllterraIcons.Ticket
+            BOOKING -> AllterraIcons.Home
+            INSURANCE -> AllterraIcons.Route
+            OTHER -> AllterraIcons.Wallet
+        }
+    }
 }
 
 data class WalletItem(
     val id: String,
     val title: String,
-    val subTitle: String,
-    val category: WalletCategory,
+    val type: DocumentType,
     val date: String,
-    val time: String = "09:40",
-    val location: String = "Tatry, PL",
-    val status: String = "Ready",
-    val isOfflineAvailable: Boolean = true,
-    val qrCodeData: String? = null,
-    val fileUrl: String? = null
+    val tripName: String? = null,
+    val isOffline: Boolean = false,
+    val fileUrl: String? = null,
+    val metadata: Map<String, String> = emptyMap()
 )
 
-fun WalletCategory.icon(): ImageVector {
-    return when (this) {
-        WalletCategory.TICKET -> Icons.Outlined.ConfirmationNumber
-        WalletCategory.BOOKING -> Icons.Outlined.Hotel
-        WalletCategory.INSURANCE -> Icons.Outlined.Shield
-        WalletCategory.ID -> Icons.Outlined.Badge
-        WalletCategory.OTHER -> Icons.Outlined.Description
-    }
-}
