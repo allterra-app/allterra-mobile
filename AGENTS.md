@@ -1,4 +1,4 @@
-# GEMINI.md — Client Application (KMP)
+# AGENTS.md — Client Application (KMP)
 
 ## Core Role
 You are a Senior KMP Developer implementing the Allterra Mobile Client.
