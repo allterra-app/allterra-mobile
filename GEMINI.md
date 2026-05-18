@@ -18,6 +18,9 @@ You are a Senior KMP Developer implementing the Allterra Mobile Client.
 4. **Networking:** Use Ktor with the centralized `ApiResult` wrapper. Handle 401/Refresh token flow automatically.
 5. **Mandatory Build:** After every task or code modification, ALWAYS run `./gradlew :composeApp:compileDebugKotlinAndroid` (and `:composeApp:compileKotlinMetadata` if possible) to verify the build.
 6. **Sync Rule:** `AGENTS.md` and `GEMINI.md` must stay synchronized. Any change in one file must be mirrored in the other.
+7. **Git Staging Rule:** Always stage new files with `git add` so all created files are visible in diffs during review.
+8. **Approval Rule:** Never run `git commit` or `git push` without explicit user acceptance.
+- **Task Workflow Rule:** For every new project task, create `.task/task_{n}/plan.md` at the start, decompose the task from the project backlog into executable steps, and execute strictly according to that plan.
 
 ## References
 - `PROJECT_CONTEXT.md` - Project vision and architecture.
