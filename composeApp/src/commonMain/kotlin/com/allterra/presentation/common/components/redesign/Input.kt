@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import com.allterra.presentation.theme.AllterraTheme
 
+import androidx.compose.ui.text.input.VisualTransformation
+
 @Composable
 fun AllterraInput(
     value: String,
@@ -23,17 +25,20 @@ fun AllterraInput(
     placeholder: String = "",
     enabled: Boolean = true,
     singleLine: Boolean = true,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailingIcon: (@Composable () -> Unit)? = null,
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val borderColor = if (isFocused) AllterraTheme.colors.moss else AllterraTheme.colors.line2
+    val borderColor = if (isFocused) AllterraTheme.currentCategoryColors.color else AllterraTheme.colors.line2
 
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
         enabled = enabled,
         singleLine = singleLine,
+        visualTransformation = visualTransformation,
         textStyle = AllterraTheme.typography.body.copy(color = AllterraTheme.colors.ink),
-        cursorBrush = SolidColor(AllterraTheme.colors.moss),
+        cursorBrush = SolidColor(AllterraTheme.currentCategoryColors.color),
         modifier = modifier
             .fillMaxWidth()
             .height(if (singleLine) 48.dp else 96.dp)
@@ -43,15 +48,24 @@ fun AllterraInput(
             .border(1.dp, borderColor, RoundedCornerShape(AllterraTheme.radius.btn))
             .padding(horizontal = AllterraTheme.spacing.s4),
         decorationBox = { innerTextField ->
-            Box(contentAlignment = Alignment.CenterStart) {
-                if (value.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        style = AllterraTheme.typography.body,
-                        color = AllterraTheme.colors.muted2
-                    )
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            style = AllterraTheme.typography.body,
+                            color = AllterraTheme.colors.muted2
+                        )
+                    }
+                    innerTextField()
                 }
-                innerTextField()
+                if (trailingIcon != null) {
+                    trailingIcon()
+                }
             }
         }
     )

@@ -21,10 +21,13 @@ expect object PlatformConfig {
     val appEnvironment: String?
     val customBaseUrl: String?
     val localBaseUrl: String
+    val version: String
 }
 
 object AppConfig {
     val environment: AppEnvironment = AppEnvironment.from(PlatformConfig.appEnvironment)
+    
+    val version: String = if (environment == AppEnvironment.LOCAL) "dev-ver" else PlatformConfig.version
 
     val baseUrl: String = PlatformConfig.customBaseUrl
         ?.trim()

@@ -138,4 +138,97 @@ object AllterraIcons {
         moveTo(4f, 18f)
         horizontalLineTo(14f)
     }.build()
+
+    val Ticket = ImageVector.Builder(
+        name = "Ticket",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).path(
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ) {
+        moveTo(3f, 7f)
+        verticalLineTo(17f)
+        curveTo(3f, 18.1f, 3.9f, 19f, 5f, 19f)
+        horizontalLineTo(19f)
+        curveTo(20.1f, 19f, 21f, 18.1f, 21f, 17f)
+        verticalLineTo(7f)
+        curveTo(21f, 5.9f, 20.1f, 5f, 19f, 5f)
+        horizontalLineTo(5f)
+        curveTo(3.9f, 5f, 3f, 5.9f, 3f, 7f)
+        close()
+        moveTo(10f, 5f)
+        verticalLineTo(8f)
+        moveTo(10f, 16f)
+        verticalLineTo(19f)
+        moveTo(14f, 5f)
+        verticalLineTo(8f)
+        moveTo(14f, 16f)
+        verticalLineTo(19f)
+    }.build()
+
+    val Scales = ImageVector.Builder(
+        name = "Scales",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).path(
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ) {
+        moveTo(12f, 3f)
+        verticalLineTo(21f)
+        moveTo(12f, 7f)
+        lineTo(4f, 10f)
+        moveTo(12f, 7f)
+        lineTo(20f, 10f)
+        moveTo(4f, 10f)
+        lineTo(4f, 16f)
+        moveTo(20f, 10f)
+        lineTo(20f, 16f)
+        moveTo(2f, 16f)
+        horizontalLineTo(6f)
+        moveTo(18f, 16f)
+        horizontalLineTo(22f)
+    }.build()
+
+    val Sharing = ImageVector.Builder(
+        name = "Sharing",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).path(
+        stroke = SolidColor(Color.Black),
+        strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round,
+        strokeLineJoin = StrokeJoin.Round
+    ) {
+        moveTo(18f, 5f)
+        moveToRelative(-3f, 0f)
+        arcTo(3f, 3f, 0f, true, true, 21f, 5f)
+        arcTo(3f, 3f, 0f, true, true, 15f, 5f)
+        
+        moveTo(6f, 12f)
+        moveToRelative(-3f, 0f)
+        arcTo(3f, 3f, 0f, true, true, 9f, 12f)
+        arcTo(3f, 3f, 0f, true, true, 3f, 12f)
+
+        moveTo(18f, 19f)
+        moveToRelative(-3f, 0f)
+        arcTo(3f, 3f, 0f, true, true, 21f, 19f)
+        arcTo(3f, 3f, 0f, true, true, 15f, 19f)
+
+        moveTo(8.59f, 13.51f)
+        lineTo(15.42f, 17.49f)
+        moveTo(15.41f, 6.51f)
+        lineTo(8.59f, 10.49f)
+    }.build()
 }

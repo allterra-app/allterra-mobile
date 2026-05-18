@@ -30,13 +30,13 @@ fun AllterraButton(
 ) {
     val height = if (isSmall) 36.dp else 48.dp
     val backgroundColor = when (variant) {
-        AllterraButtonVariant.Primary -> AllterraTheme.colors.moss
+        AllterraButtonVariant.Primary -> AllterraTheme.currentCategoryColors.color
         AllterraButtonVariant.Secondary -> AllterraTheme.colors.surface
         AllterraButtonVariant.Ghost -> Color.Transparent
         AllterraButtonVariant.Terra -> AllterraTheme.colors.terra
     }
     val contentColor = when (variant) {
-        AllterraButtonVariant.Primary -> Color.White
+        AllterraButtonVariant.Primary -> if (AllterraTheme.colors.isLight) Color.White else AllterraTheme.colors.ink
         AllterraButtonVariant.Secondary -> AllterraTheme.colors.ink
         AllterraButtonVariant.Ghost -> AllterraTheme.colors.ink
         AllterraButtonVariant.Terra -> Color.White

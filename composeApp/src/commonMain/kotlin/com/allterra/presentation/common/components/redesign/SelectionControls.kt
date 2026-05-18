@@ -28,8 +28,8 @@ fun AllterraCheckbox(
     enabled: Boolean = true,
 ) {
     val shape = RoundedCornerShape(7.dp)
-    val background = if (checked) AllterraTheme.colors.moss else AllterraTheme.colors.surface
-    val border = if (checked) AllterraTheme.colors.moss else AllterraTheme.colors.line2
+    val background = if (checked) AllterraTheme.currentCategoryColors.color else AllterraTheme.colors.surface
+    val border = if (checked) AllterraTheme.currentCategoryColors.color else AllterraTheme.colors.line2
 
     Box(
         modifier = modifier
@@ -44,7 +44,7 @@ fun AllterraCheckbox(
             Icon(
                 imageVector = Icons.Outlined.Check,
                 contentDescription = null,
-                tint = Color.White,
+                tint = if (AllterraTheme.colors.isLight) Color.White else AllterraTheme.colors.ink,
                 modifier = Modifier.size(16.dp),
             )
         }
@@ -62,7 +62,7 @@ fun AllterraToggle(
         targetValue = if (checked) 18.dp else 2.dp,
         animationSpec = tween(durationMillis = 180),
     )
-    val background = if (checked) AllterraTheme.colors.moss else AllterraTheme.colors.line2
+    val background = if (checked) AllterraTheme.currentCategoryColors.color else AllterraTheme.colors.line2
 
     Box(
         modifier = modifier

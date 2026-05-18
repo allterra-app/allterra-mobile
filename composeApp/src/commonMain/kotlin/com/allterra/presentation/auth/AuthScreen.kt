@@ -1,51 +1,36 @@
 package com.allterra.presentation.auth
 
 import allterra.composeapp.generated.resources.Res
-import allterra.composeapp.generated.resources.allterra_logo
-import allterra.composeapp.generated.resources.allterra_named_logo
-import allterra.composeapp.generated.resources.allterra_text_logo
+import allterra.composeapp.generated.resources.mountain_color_no_bg
+import allterra.composeapp.generated.resources.allterra_name_no_bg
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.allterra.core.ui.UiState
 import com.allterra.domain.model.AppLanguage
-import com.allterra.presentation.common.components.LanguageSwitchLabel
-import com.allterra.presentation.common.components.resolveBackdrop
+import com.allterra.presentation.common.components.redesign.*
 import com.allterra.presentation.localization.appStrings
-import com.allterra.presentation.localization.languageDisplayName
 import com.allterra.presentation.root.AuthScreen
+import com.allterra.presentation.theme.AllterraCategory
+import com.allterra.presentation.theme.AllterraTheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -73,52 +58,46 @@ fun AuthScreen(
         }
     }
 
-    when (mode) {
-        AuthScreen.LOGIN -> LoginScreen(
-            state = state,
-            backdropIndex = backdropIndex,
-            selectedLanguage = selectedLanguage,
-            onLanguageSwitchClick = onLanguageSwitchClick,
-            onEmailChanged = {
-                viewModel.clearError()
-                viewModel.onEmailChanged(it)
-            },
-            onPasswordChanged = {
-                viewModel.clearError()
-                viewModel.onPasswordChanged(it)
-            },
-            onSubmit = { viewModel.submit(AuthMode.Login, strings.authFieldValidation) },
-            onOpenRegister = onOpenRegister,
-        )
+    AllterraTheme(category = AllterraCategory.Social) {
+        when (mode) {
+            AuthScreen.LOGIN -> LoginScreen(
+                state = state,
+                onEmailChanged = {
+                    viewModel.clearError()
+                    viewModel.onEmailChanged(it)
+                },
+                onPasswordChanged = {
+                    viewModel.clearError()
+                    viewModel.onPasswordChanged(it)
+                },
+                onSubmit = { viewModel.submit(AuthMode.Login, strings.authFieldValidation) },
+                onOpenRegister = onOpenRegister,
+            )
 
-        AuthScreen.REGISTER -> RegisterScreen(
-            state = state,
-            selectedLanguage = selectedLanguage,
-            onLanguageSwitchClick = onLanguageSwitchClick,
-            onNameChanged = {
-                viewModel.clearError()
-                viewModel.onNameChanged(it)
-            },
-            onEmailChanged = {
-                viewModel.clearError()
-                viewModel.onEmailChanged(it)
-            },
-            onPasswordChanged = {
-                viewModel.clearError()
-                viewModel.onPasswordChanged(it)
-            },
-            onSubmit = { viewModel.submit(AuthMode.Register, strings.authFieldValidation) },
-            onOpenLogin = onOpenLogin,
-        )
+            AuthScreen.REGISTER -> RegisterScreen(
+                state = state,
+                onNameChanged = {
+                    viewModel.clearError()
+                    viewModel.onNameChanged(it)
+                },
+                onEmailChanged = {
+                    viewModel.clearError()
+                    viewModel.onEmailChanged(it)
+                },
+                onPasswordChanged = {
+                    viewModel.clearError()
+                    viewModel.onPasswordChanged(it)
+                },
+                onSubmit = { viewModel.submit(AuthMode.Register, strings.authFieldValidation) },
+                onOpenLogin = onOpenLogin,
+            )
+        }
     }
 }
 
 @Composable
 private fun LoginScreen(
     state: AuthFormState,
-    backdropIndex: Int,
-    selectedLanguage: AppLanguage,
-    onLanguageSwitchClick: () -> Unit,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
     onSubmit: () -> Unit,
@@ -126,85 +105,108 @@ private fun LoginScreen(
 ) {
     val strings = appStrings()
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .windowInsetsPadding(WindowInsets.ime),
+            .background(AllterraTheme.colors.bg)
+            .padding(horizontal = AllterraTheme.spacing.screenPaddingX)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s10))
+        
         Image(
-            painter = painterResource(resolveBackdrop(backdropIndex)),
+            painter = painterResource(Res.drawable.mountain_color_no_bg),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(64.dp)
         )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0x1A000000), Color(0x600D2A3B))
-                    )
-                )
+        
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s4))
+
+        Text(
+            text = strings.loginTitle,
+            style = AllterraTheme.typography.displayL,
+            color = AllterraTheme.colors.ink
         )
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(modifier = Modifier.weight(0.14f))
-            Image(
-                painter = painterResource(Res.drawable.allterra_named_logo),
-                contentDescription = strings.appName,
-                modifier = Modifier.size(width = 250.dp, height = 170.dp),
-                contentScale = ContentScale.Crop,
-                alignment = Alignment.TopCenter,
-            )
-            Image(
-                painter = painterResource(Res.drawable.allterra_text_logo),
-                contentDescription = strings.appName,
-                modifier = Modifier
-                    .size(width = 210.dp, height = 46.dp)
-                    .padding(top = 2.dp),
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s8))
+
+        Column(verticalArrangement = Arrangement.spacedBy(AllterraTheme.spacing.s4)) {
+            Text(strings.emailLabel, style = AllterraTheme.typography.smallStrong, color = AllterraTheme.colors.muted)
+            AllterraInput(
+                value = state.email,
+                onValueChange = onEmailChanged,
+                placeholder = "email@example.com"
             )
 
-            Spacer(modifier = Modifier.weight(0.06f))
-
-            AuthFields(
-                state = state,
-                onNameChanged = {},
-                onEmailChanged = onEmailChanged,
-                onPasswordChanged = onPasswordChanged,
-                onSubmit = onSubmit,
-                submitTitle = strings.loginAction,
-            )
-
-            Text(
-                text = strings.registerLink,
-                modifier = Modifier
-                    .padding(top = 10.dp)
-                    .clickable(onClick = onOpenRegister),
-                color = Color(0xFF146B73),
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            FooterRow(
-                footer = strings.appFooter,
-                languageLabel = languageDisplayName(selectedLanguage, strings),
-                onLanguageSwitchClick = onLanguageSwitchClick,
+            Text(strings.passwordLabel, style = AllterraTheme.typography.smallStrong, color = AllterraTheme.colors.muted)
+            var passwordVisible by remember { mutableStateOf(false) }
+            AllterraInput(
+                value = state.password,
+                onValueChange = onPasswordChanged,
+                placeholder = "••••••••",
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    AllterraIconButton(
+                        onClick = { passwordVisible = !passwordVisible }
+                    ) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                            contentDescription = null,
+                            tint = AllterraTheme.colors.muted
+                        )
+                    }
+                }
             )
         }
+
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s6))
+
+        AllterraButton(
+            text = strings.loginAction,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = state.uiState !is UiState.Loading,
+            onClick = onSubmit
+        )
+
+        if (state.uiState is UiState.Error) {
+            Text(
+                text = (state.uiState as UiState.Error).message,
+                color = AllterraTheme.colors.crimson,
+                style = AllterraTheme.typography.small,
+                modifier = Modifier.padding(top = AllterraTheme.spacing.s2),
+                textAlign = TextAlign.Center
+            )
+        }
+
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s8))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Don't have an account?", // TODO: Localize correctly
+                style = AllterraTheme.typography.body,
+                color = AllterraTheme.colors.muted
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = strings.registerLink,
+                style = AllterraTheme.typography.bodyStrong,
+                color = AllterraTheme.currentCategoryColors.color,
+                modifier = Modifier.allterraClickable { onOpenRegister() }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s10))
     }
 }
 
 @Composable
 private fun RegisterScreen(
     state: AuthFormState,
-    selectedLanguage: AppLanguage,
-    onLanguageSwitchClick: () -> Unit,
     onNameChanged: (String) -> Unit,
     onEmailChanged: (String) -> Unit,
     onPasswordChanged: (String) -> Unit,
@@ -213,174 +215,115 @@ private fun RegisterScreen(
 ) {
     val strings = appStrings()
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFEAECEE))
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .windowInsetsPadding(WindowInsets.ime),
+            .background(AllterraTheme.colors.bg)
+            .padding(horizontal = AllterraTheme.spacing.screenPaddingX)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(modifier = Modifier.weight(0.22f))
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s8))
+        
+        Image(
+            painter = painterResource(Res.drawable.mountain_color_no_bg),
+            contentDescription = null,
+            modifier = Modifier.size(48.dp)
+        )
 
-            Text(
-                text = strings.registerTitle,
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color(0xFF0E7E8A),
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = strings.registerSubtitle,
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color(0xFF549CA4),
-                modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
-            )
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s4))
 
-            Box(contentAlignment = Alignment.Center) {
-                Image(
-                    painter = painterResource(Res.drawable.allterra_logo),
-                    contentDescription = null,
-                    modifier = Modifier.size(260.dp),
-                    alpha = 0.35f,
-                )
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    AuthFields(
-                        state = state,
-                        onNameChanged = onNameChanged,
-                        onEmailChanged = onEmailChanged,
-                        onPasswordChanged = onPasswordChanged,
-                        onSubmit = onSubmit,
-                        submitTitle = strings.registerAction,
-                        showNameField = true,
-                        compact = true,
-                    )
+        Text(
+            text = strings.registerTitle,
+            style = AllterraTheme.typography.displayM,
+            color = AllterraTheme.colors.ink,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s6))
+
+        Column(verticalArrangement = Arrangement.spacedBy(AllterraTheme.spacing.s3)) {
+            LabelAndInput(strings.nameLabel, state.name, onNameChanged, "Your name")
+            LabelAndInput(strings.emailLabel, state.email, onEmailChanged, "email@example.com")
+            
+            var passwordVisible by remember { mutableStateOf(false) }
+            LabelAndInput(
+                strings.passwordLabel, 
+                state.password, 
+                onPasswordChanged, 
+                "••••••••",
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    AllterraIconButton(
+                        onClick = { passwordVisible = !passwordVisible }
+                    ) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                            contentDescription = null,
+                            tint = AllterraTheme.colors.muted
+                        )
+                    }
                 }
-            }
-
-            Text(
-                text = strings.loginLink,
-                modifier = Modifier
-                    .padding(top = 10.dp)
-                    .clickable(onClick = onOpenLogin),
-                color = Color(0xFF146B73),
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-            FooterRow(
-                footer = strings.appFooter,
-                languageLabel = languageDisplayName(selectedLanguage, strings),
-                onLanguageSwitchClick = onLanguageSwitchClick,
             )
         }
+
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s6))
+
+        // Terms Checkbox
+        var termsAccepted by remember { mutableStateOf(false) }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            AllterraCheckbox(checked = termsAccepted, onCheckedChange = { termsAccepted = it })
+            Spacer(modifier = Modifier.width(AllterraTheme.spacing.s3))
+            Text(
+                text = "I agree to Terms & Privacy", // TODO: Localize
+                style = AllterraTheme.typography.small,
+                color = AllterraTheme.colors.muted
+            )
+        }
+
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s6))
+
+        AllterraButton(
+            text = strings.registerAction,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = termsAccepted && state.uiState !is UiState.Loading,
+            onClick = onSubmit
+        )
+
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s6))
+
+        Text(
+            text = strings.loginLink,
+            style = AllterraTheme.typography.bodyStrong,
+            color = AllterraTheme.colors.muted,
+            modifier = Modifier.allterraClickable { onOpenLogin() }
+        )
+
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s8))
     }
 }
 
 @Composable
-private fun AuthFields(
-    state: AuthFormState,
-    onNameChanged: (String) -> Unit,
-    onEmailChanged: (String) -> Unit,
-    onPasswordChanged: (String) -> Unit,
-    onSubmit: () -> Unit,
-    submitTitle: String,
-    showNameField: Boolean = false,
-    compact: Boolean = false,
+private fun LabelAndInput(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
+    trailingIcon: (@Composable () -> Unit)? = null
 ) {
-    val strings = appStrings()
-
-    val fieldModifier = if (compact) {
-        Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 40.dp)
-    } else {
-        Modifier.fillMaxWidth()
-    }
-
-    if (showNameField) {
-        OutlinedTextField(
-            value = state.name,
-            onValueChange = onNameChanged,
-            modifier = fieldModifier,
-            label = { Text(strings.nameLabel) },
-            shape = RoundedCornerShape(12.dp),
-            singleLine = true,
-        )
-    }
-
-    OutlinedTextField(
-        value = state.email,
-        onValueChange = onEmailChanged,
-        modifier = if (showNameField) fieldModifier.padding(top = 8.dp) else fieldModifier,
-        label = { Text(strings.emailLabel) },
-        shape = RoundedCornerShape(12.dp),
-        singleLine = true,
-    )
-
-    OutlinedTextField(
-        value = state.password,
-        onValueChange = onPasswordChanged,
-        modifier = fieldModifier.padding(top = 8.dp),
-        label = { Text(strings.passwordLabel) },
-        shape = RoundedCornerShape(12.dp),
-        visualTransformation = PasswordVisualTransformation(),
-        singleLine = true,
-    )
-
-    Button(
-        onClick = onSubmit,
-        modifier = Modifier
-            .padding(top = 12.dp)
-            .fillMaxWidth(if (compact) 0.42f else 0.36f),
-        enabled = state.uiState !is UiState.Loading,
-    ) {
-        Text(submitTitle)
-    }
-
-    when (val uiState = state.uiState) {
-        UiState.Idle -> Unit
-        UiState.Loading -> CircularProgressIndicator(modifier = Modifier.padding(top = 8.dp))
-        is UiState.Error -> Text(
-            text = uiState.message,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(top = 6.dp),
-            textAlign = TextAlign.Center,
-        )
-
-        is UiState.Success -> Text(
-            text = strings.authSuccess,
-            color = Color(0xFF0E7E8A),
-            modifier = Modifier.padding(top = 6.dp),
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-@Composable
-private fun FooterRow(
-    footer: String,
-    languageLabel: String,
-    onLanguageSwitchClick: () -> Unit,
-) {
-    val footerText = "$footer ${currentSystemYear()}"
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 20.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text = footerText, color = Color(0xFF0E7E8A))
-        LanguageSwitchLabel(
-            title = languageLabel,
-            onClick = onLanguageSwitchClick,
+    Column(verticalArrangement = Arrangement.spacedBy(AllterraTheme.spacing.s1)) {
+        Text(label, style = AllterraTheme.typography.smallStrong, color = AllterraTheme.colors.muted)
+        AllterraInput(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = placeholder,
+            visualTransformation = visualTransformation,
+            trailingIcon = trailingIcon
         )
     }
 }
