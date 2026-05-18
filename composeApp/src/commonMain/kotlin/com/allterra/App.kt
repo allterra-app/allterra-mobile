@@ -1,42 +1,42 @@
 package com.allterra
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.allterra.di.appModule
 import com.allterra.domain.model.AppLanguage
-import com.allterra.presentation.auth.AuthScreen
+import com.allterra.presentation.auth.AuthScreen as AuthScreenContent
 import com.allterra.presentation.auth.AuthViewModel
 import com.allterra.presentation.common.components.navigation.BottomTabBar
 import com.allterra.presentation.common.components.navigation.MainTab
+import com.allterra.presentation.common.components.redesign.AllterraButton
+import com.allterra.presentation.common.components.redesign.AllterraSheet
+import com.allterra.presentation.dashboard.DashboardScreen
 import com.allterra.presentation.feed.FeedScreen
 import com.allterra.presentation.feed.FeedViewModel
 import com.allterra.presentation.localization.LocalAppLanguage
 import com.allterra.presentation.localization.LocalAppStrings
 import com.allterra.presentation.localization.stringsFor
 import com.allterra.presentation.map.MapScreen
+import com.allterra.presentation.onboarding.OnboardingScreen
 import com.allterra.presentation.pois.PoisScreen
 import com.allterra.presentation.pois.PoisViewModel
 import com.allterra.presentation.profile.ProfileViewModel
-import com.allterra.presentation.onboarding.OnboardingScreen
-import com.allterra.presentation.dashboard.DashboardScreen
-import com.allterra.presentation.root.MainOverlay
-import com.allterra.presentation.root.RootStage
-import com.allterra.presentation.root.RootViewModel
+import com.allterra.presentation.root.*
 import com.allterra.presentation.routes.RoutesScreen
 import com.allterra.presentation.routes.RoutesViewModel
 import com.allterra.presentation.settings.SettingsScreen
 import com.allterra.presentation.splash.SplashScreen
-import com.allterra.presentation.theme.AllterraCategory
-import com.allterra.presentation.theme.AllterraTheme
-import com.allterra.presentation.theme.ThemePreviewScreen
+import com.allterra.presentation.theme.*
 import com.allterra.presentation.trips.TripsScreen
+import com.allterra.presentation.trips.TripViewModel
 import com.allterra.presentation.wallet.*
-import com.allterra.presentation.common.components.redesign.AllterraSheet
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
@@ -87,7 +87,7 @@ fun App() {
                             onCompleted = rootViewModel::onOnboardingCompleted
                         )
 
-                        RootStage.AUTH -> AuthScreen(
+                        RootStage.AUTH -> AuthScreenContent(
                             mode = rootState.authScreen,
                             viewModel = authViewModel,
                             backdropIndex = rootState.backdropIndex,
@@ -100,20 +100,25 @@ fun App() {
                             onAuthorized = rootViewModel::onAuthSuccess,
                         )
 
-                        RootStage.MAIN -> Box(modifier = Modifier.fillMaxSize()) {
+                        RootStage.MAIN -> {
                             val feedViewModel: FeedViewModel = koinViewModel()
                             val profileViewModel: ProfileViewModel = koinViewModel()
                             val poisViewModel: PoisViewModel = koinViewModel()
                             val routesViewModel: RoutesViewModel = koinViewModel()
+                            val walletViewModel: WalletViewModel = koinViewModel()
+                            val tripViewModel: TripViewModel = koinViewModel()
+
                             val routesState by routesViewModel.state.collectAsStateWithLifecycle()
                             val poisState by poisViewModel.state.collectAsStateWithLifecycle()
                             val profileState by profileViewModel.state.collectAsStateWithLifecycle()
+                            val walletState by walletViewModel.state.collectAsStateWithLifecycle()
+
                             var showRoutesLibrary by remember { mutableStateOf(false) }
-                            val walletItems = remember { emptyList<WalletItem>() }
 
                             LaunchedEffect(rootState.stage) {
                                 feedViewModel.refresh()
                                 profileViewModel.refresh()
+                                walletViewModel.refresh()
                                 routesViewModel.refreshRoutes()
                                 poisViewModel.refreshPois()
                             }
@@ -125,21 +130,60 @@ fun App() {
                                         onBack = rootViewModel::closeOverlay,
                                     )
 
+                                    rootState.overlay == MainOverlay.SETTINGS -> SettingsScreen(
+                                        onLogout = rootViewModel::onLogout,
+                                        onBack = rootViewModel::closeOverlay
+                                    )
+
+                                    rootState.overlay == MainOverlay.WALLET_ADD -> AllterraSheet(onDismiss = rootViewModel::closeOverlay) {
+                                        WalletAddSheet(
+                                            onImportPDF = {},
+                                            onImportPhoto = {},
+                                            onImportEmail = {},
+                                            onScan = {},
+                                            onManual = {},
+                                            onWalletPass = {},
+                                        )
+                                    }
+
+                                    rootState.overlay == MainOverlay.WALLET_VIEW -> {
+                                        val item = walletState.items.find { it.id == rootState.selectedWalletItemId }
+                                        if (item != null) {
+                                            AllterraSheet(onDismiss = rootViewModel::closeOverlay) {
+                                                WalletItemViewer(
+                                                    item = item,
+                                                    onOpenOriginal = {},
+                                                    onShare = {}
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    rootState.overlay == MainOverlay.PROFILE -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Text("Profile Placeholder (Task 12)", style = AllterraTheme.typography.displayM)
+                                        AllterraButton("Back", modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp)) {
+                                            rootViewModel.closeOverlay()
+                                        }
+                                    }
+
                                     rootState.selectedMainTab == MainTab.HOME -> DashboardScreen(
                                         userName = profileState.userName.ifBlank { "Explorer" },
-                                        onLogout = rootViewModel::onLogout,
-                                        onOpenPacking = {},
+                                        onOpenProfile = rootViewModel::openProfile,
+                                        onOpenNotifications = {}, 
+                                        onOpenWallet = { rootViewModel.onMainTabSelected(MainTab.WALLET) },
                                         onNewPost = { rootViewModel.onMainTabSelected(MainTab.FEED) },
-                                        onAddDoc = { rootViewModel.onMainTabSelected(MainTab.WALLET) }
+                                        onOpenTripCreate = { rootViewModel.onMainTabSelected(MainTab.TRIPS) },
+                                        onOpenMap = { rootViewModel.onMainTabSelected(MainTab.MAP) },
+                                        onSeeAllTrips = { rootViewModel.onMainTabSelected(MainTab.TRIPS) }
                                     )
 
                                     rootState.selectedMainTab == MainTab.FEED -> FeedScreen(viewModel = feedViewModel)
 
                                     rootState.selectedMainTab == MainTab.TRIPS -> TripsScreen(
+                                        viewModel = tripViewModel,
                                         routes = routesState.items,
-                                        walletItems = walletItems,
-                                        onOpenRouteLibrary = { showRoutesLibrary = true },
-                                        onOpenWallet = { rootViewModel.onMainTabSelected(MainTab.WALLET) },
+                                        walletItems = walletState.items,
+                                        onRoutesClick = { showRoutesLibrary = true },
                                     )
 
                                     rootState.selectedMainTab == MainTab.MAP && showRoutesLibrary -> RoutesScreen(
@@ -151,50 +195,20 @@ fun App() {
                                         onOpenRoutes = { showRoutesLibrary = true }
                                     )
 
-                                    rootState.selectedMainTab == MainTab.WALLET -> {
-                                        var showAddSheet by remember { mutableStateOf(false) }
-                                        var selectedItem by remember { mutableStateOf<WalletItem?>(null) }
-
-                                        WalletScreen(
-                                            items = walletItems,
-                                            onAddItem = { showAddSheet = true },
-                                            onItemClick = { selectedItem = it }
-                                        )
-
-                                        if (showAddSheet) {
-                                            AllterraSheet(onDismiss = { showAddSheet = false }) {
-                                                WalletAddSheet(
-                                                    onImportPDF = { showAddSheet = false },
-                                                    onImportPhoto = { showAddSheet = false },
-                                                    onImportEmail = { showAddSheet = false },
-                                                    onScan = { showAddSheet = false },
-                                                    onManual = { showAddSheet = false },
-                                                    onWalletPass = { showAddSheet = false },
-                                                )
-                                            }
-                                        }
-
-                                        if (selectedItem != null) {
-                                            AllterraSheet(onDismiss = { selectedItem = null }) {
-                                                WalletItemViewer(
-                                                    item = selectedItem!!,
-                                                    onOpenOriginal = { selectedItem = null },
-                                                    onShare = { selectedItem = null }
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    else -> SettingsScreen()
+                                    rootState.selectedMainTab == MainTab.WALLET -> WalletScreen(
+                                        items = walletState.items,
+                                        onAddItem = rootViewModel::openWalletAdd,
+                                        onItemClick = { rootViewModel.openWalletView(it.id) }
+                                    )
                                 }
-                            }
 
-                            BottomTabBar(
-                                modifier = Modifier.align(Alignment.BottomCenter),
-                                selectedTab = rootState.selectedMainTab,
-                                strings = strings,
-                                onTabSelected = rootViewModel::onMainTabSelected,
-                            )
+                                BottomTabBar(
+                                    modifier = Modifier.align(Alignment.BottomCenter),
+                                    selectedTab = rootState.selectedMainTab,
+                                    strings = strings,
+                                    onTabSelected = rootViewModel::onMainTabSelected,
+                                )
+                            }
                         }
                     }
                 }

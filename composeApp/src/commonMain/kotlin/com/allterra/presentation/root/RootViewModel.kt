@@ -29,6 +29,10 @@ enum class AuthScreen {
 enum class MainOverlay {
     NONE,
     POIS,
+    SETTINGS,
+    PROFILE,
+    WALLET_ADD,
+    WALLET_VIEW,
 }
 
 data class RootUiState(
@@ -36,6 +40,7 @@ data class RootUiState(
     val authScreen: AuthScreen = AuthScreen.LOGIN,
     val selectedMainTab: MainTab = MainTab.HOME,
     val overlay: MainOverlay = MainOverlay.NONE,
+    val selectedWalletItemId: String? = null,
     val language: AppLanguage = AppLanguage.EN,
     val backdropIndex: Int = 0,
 )
@@ -136,6 +141,22 @@ class RootViewModel(
 
     fun openPoisFromProfile() {
         _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.HOME, overlay = MainOverlay.POIS) }
+    }
+
+    fun openSettings() {
+        _state.update { it.copy(overlay = MainOverlay.SETTINGS) }
+    }
+
+    fun openProfile() {
+        _state.update { it.copy(overlay = MainOverlay.PROFILE) }
+    }
+
+    fun openWalletAdd() {
+        _state.update { it.copy(overlay = MainOverlay.WALLET_ADD) }
+    }
+
+    fun openWalletView(id: String) {
+        _state.update { it.copy(overlay = MainOverlay.WALLET_VIEW, selectedWalletItemId = id) }
     }
 
     fun openRoutesFromProfile() {
