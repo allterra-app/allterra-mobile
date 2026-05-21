@@ -34,6 +34,7 @@ enum class MainOverlay {
     WALLET_ADD,
     WALLET_VIEW,
     GEAR_INVENTORY,
+    PACKING,
 }
 
 data class RootUiState(
@@ -42,6 +43,7 @@ data class RootUiState(
     val selectedMainTab: MainTab = MainTab.HOME,
     val overlay: MainOverlay = MainOverlay.NONE,
     val selectedWalletItemId: String? = null,
+    val selectedTripId: String? = null,
     val language: AppLanguage = AppLanguage.EN,
     val backdropIndex: Int = 0,
 )
@@ -126,16 +128,12 @@ class RootViewModel(
         _state.update { it.copy(selectedMainTab = tab, overlay = MainOverlay.NONE, stage = RootStage.MAIN) }
     }
 
-    /**
-     * Unified navigation entry point equivalent to go({ tab, sub, id }) in the redesign.
-     */
     fun navigateTo(tab: MainTab, sub: String? = null, id: String? = null) {
         _state.update { 
             it.copy(
                 selectedMainTab = tab, 
                 overlay = MainOverlay.NONE, 
                 stage = RootStage.MAIN
-                // Deep navigation logic for sub/id will be expanded in feature tasks
             ) 
         }
     }
@@ -172,8 +170,12 @@ class RootViewModel(
         _state.update { it.copy(stage = RootStage.MAIN, selectedMainTab = MainTab.HOME, overlay = MainOverlay.GEAR_INVENTORY) }
     }
 
+    fun openPacking(tripId: String) {
+        _state.update { it.copy(overlay = MainOverlay.PACKING, selectedTripId = tripId) }
+    }
+
     fun closeOverlay() {
-        _state.update { it.copy(overlay = MainOverlay.NONE) }
+        _state.update { it.copy(overlay = MainOverlay.NONE, selectedTripId = null) }
     }
 
     private fun bootstrap() {
@@ -227,6 +229,6 @@ class RootViewModel(
 
     private companion object {
         private const val BACKDROP_COUNT = 2
-        private const val SPLASH_DELAY_MS = 2500L // Increased for redesign animation
+        private const val SPLASH_DELAY_MS = 2500L
     }
 }

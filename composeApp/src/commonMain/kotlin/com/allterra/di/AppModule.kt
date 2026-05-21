@@ -15,6 +15,7 @@ import com.allterra.network.document.DocumentApi
 import com.allterra.network.gear.GearApi
 import com.allterra.network.media.MediaApi
 import com.allterra.network.media.MediaApiImpl
+import com.allterra.network.packing.PackingApi
 import com.allterra.network.poi.PoiApi
 import com.allterra.network.poi.PoiApiImpl
 import com.allterra.network.poi.PoiPhotoApi
@@ -31,6 +32,7 @@ import com.allterra.network.user.UserApiImpl
 import com.allterra.presentation.auth.AuthViewModel
 import com.allterra.presentation.feed.FeedViewModel
 import com.allterra.presentation.gear.GearViewModel
+import com.allterra.presentation.packing.PackingViewModel
 import com.allterra.presentation.pois.PoisViewModel
 import com.allterra.presentation.profile.ProfileViewModel
 import com.allterra.presentation.root.RootViewModel
@@ -47,6 +49,7 @@ val appModule = module {
     single { DocumentApi(httpClient = get(), tokenStorage = get()) }
     single { TripApi(httpClient = get(), tokenStorage = get()) }
     single { GearApi(httpClient = get(), tokenStorage = get()) }
+    single { PackingApi(httpClient = get(), tokenStorage = get()) }
     single<RouteApi> { RouteApiImpl(httpClient = get(), tokenStorage = get()) }
     single<PoiApi> { PoiApiImpl(httpClient = get(), tokenStorage = get()) }
     single<PoiPhotoApi> { PoiPhotoApiImpl(httpClient = get(), tokenStorage = get()) }
@@ -61,6 +64,7 @@ val appModule = module {
     single<WalletRepository> { WalletRepositoryImpl(api = get()) }
     single<TripRepository> { TripRepositoryImpl(api = get()) }
     single<GearRepository> { GearRepositoryImpl(api = get()) }
+    single<PackingRepository> { PackingRepositoryImpl(packingApi = get()) }
     single<PostsRepository> {
         PostsRepositoryImpl(
             userApi = get(),
@@ -94,4 +98,5 @@ val appModule = module {
     viewModel { WalletViewModel(repository = get()) }
     viewModel { TripViewModel(repository = get()) }
     viewModel { GearViewModel(repository = get()) }
+    viewModel { (tripId: String) -> PackingViewModel(packingRepository = get(), tripId = tripId) }
 }

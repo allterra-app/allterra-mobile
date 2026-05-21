@@ -27,6 +27,8 @@ import com.allterra.presentation.localization.LocalAppStrings
 import com.allterra.presentation.localization.stringsFor
 import com.allterra.presentation.map.MapScreen
 import com.allterra.presentation.onboarding.OnboardingScreen
+import com.allterra.presentation.packing.PackingScreen
+import com.allterra.presentation.packing.PackingViewModel
 import com.allterra.presentation.pois.PoisScreen
 import com.allterra.presentation.pois.PoisViewModel
 import com.allterra.presentation.profile.ProfileViewModel
@@ -42,6 +44,7 @@ import com.allterra.presentation.wallet.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinApplication
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,9 +63,11 @@ fun App() {
             LocalAppLanguage provides rootState.language,
             LocalAppStrings provides strings,
         ) {
-            val currentCategory: AllterraCategory = remember(rootState.selectedMainTab, rootState.stage) {
+            val currentCategory: AllterraCategory = remember(rootState.selectedMainTab, rootState.stage, rootState.overlay) {
                 if (rootState.stage != RootStage.MAIN) {
                     AllterraCategory.Neutral
+                } else if (rootState.overlay == MainOverlay.PACKING || rootState.overlay == MainOverlay.GEAR_INVENTORY) {
+                    AllterraCategory.Gear
                 } else {
                     when (rootState.selectedMainTab) {
                         MainTab.HOME -> AllterraCategory.Neutral
@@ -143,6 +148,16 @@ fun App() {
                                         onBack = rootViewModel::closeOverlay
                                     )
 
+                                    rootState.overlay == MainOverlay.PACKING -> {
+                                        val packingViewModel: PackingViewModel = koinViewModel {
+                                            parametersOf(rootState.selectedTripId ?: "")
+                                        }
+                                        PackingScreen(
+                                            viewModel = packingViewModel,
+                                            onBack = rootViewModel::closeOverlay
+                                        )
+                                    }
+
                                     rootState.overlay == MainOverlay.WALLET_ADD -> AllterraSheet(onDismiss = rootViewModel::closeOverlay) {
                                         WalletAddSheet(
                                             onImportPDF = {},
@@ -190,6 +205,7 @@ fun App() {
 
                                     rootState.selectedMainTab == MainTab.TRIPS -> TripsScreen(
                                         viewModel = tripViewModel,
+                                        rootViewModel = rootViewModel,
                                         routes = routesState.items,
                                         walletItems = walletState.items,
                                         onRoutesClick = { showRoutesLibrary = true },

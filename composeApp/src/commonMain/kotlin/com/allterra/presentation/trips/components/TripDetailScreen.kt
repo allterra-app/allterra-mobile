@@ -3,7 +3,6 @@ package com.allterra.presentation.trips.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -14,13 +13,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.allterra.presentation.common.components.redesign.*
 import com.allterra.presentation.common.model.RouteUiModel
-import com.allterra.presentation.localization.appStrings
 import com.allterra.presentation.theme.AllterraTheme
 import com.allterra.presentation.trips.TripUiModel
 import com.allterra.presentation.wallet.WalletItem
@@ -34,6 +30,7 @@ fun TripDetailScreen(
     trip: TripUiModel,
     route: RouteUiModel?,
     docs: List<WalletItem>,
+    onOpenPacking: (String) -> Unit,
     onBack: () -> Unit
 ) {
     val terra = AllterraTheme.categorical.route
@@ -69,7 +66,7 @@ fun TripDetailScreen(
             Column(
                 modifier = Modifier.align(Alignment.BottomStart).padding(AllterraTheme.spacing.s4)
             ) {
-                AllterraChip(trip.status.name, categorical = terra)
+                AllterraChip(text = trip.status.name, categorical = terra)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(trip.title, style = AllterraTheme.typography.displayM, color = AllterraTheme.colors.ink)
             }
@@ -80,7 +77,6 @@ fun TripDetailScreen(
             selectedTabIndex = selectedTab.ordinal,
             containerColor = Color.Transparent,
             contentColor = terra.color,
-            divider = {},
             indicator = {},
             edgePadding = AllterraTheme.spacing.screenPaddingX
         ) {
@@ -88,7 +84,14 @@ fun TripDetailScreen(
                 val selected = selectedTab == tab
                 Tab(
                     selected = selected,
-                    onClick = { selectedTab = tab },
+                    onClick = {
+                        println("DEBUG: Tab clicked: ${tab.name}")
+                        if (tab == TripTab.Gear) {
+                            onOpenPacking(trip.id)
+                        } else {
+                            selectedTab = tab
+                        }
+                    },
                     text = {
                         Text(
                             text = tab.name,
@@ -127,8 +130,8 @@ fun TripDetailScreen(
 @Composable
 private fun TripOverview(trip: TripUiModel) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        AllterraCard(hasShadow = false, backgroundColor = AllterraTheme.colors.surface2) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+        AllterraCard(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceAround) {
                 OverviewStat("Ready", "${(trip.readiness.docsReady * 100 / trip.readiness.docsTotal.coerceAtLeast(1))}%")
                 OverviewStat("Km", trip.distanceKm.toString())
                 OverviewStat("Group", trip.members.size.toString())
