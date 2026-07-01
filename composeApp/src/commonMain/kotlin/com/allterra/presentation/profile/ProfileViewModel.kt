@@ -3,9 +3,13 @@ package com.allterra.presentation.profile
 import androidx.lifecycle.ViewModel
 import com.allterra.core.result.ApiResult
 import com.allterra.domain.repository.PostsRepository
+import com.allterra.presentation.common.model.ActivityTypeUi
 import com.allterra.presentation.common.model.ActivityUiModel
+import com.allterra.presentation.common.model.PostAudienceUi
+import com.allterra.presentation.common.model.PostTypeUi
 import com.allterra.presentation.common.model.PoiUiModel
 import com.allterra.presentation.common.model.RouteUiModel
+import com.allterra.presentation.trips.TripUiModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,9 +26,19 @@ enum class ProfileFeedLayout {
     GRID,
 }
 
+enum class JournalFilter {
+    ALL,
+    TRIP_LINKED,
+    STANDALONE,
+}
+
 data class PostCreateDraft(
     val title: String = "",
     val description: String = "",
+    val audience: PostAudienceUi = PostAudienceUi.PUBLIC,
+    val type: PostTypeUi = PostTypeUi.CHECK_IN,
+    val activity: ActivityTypeUi = ActivityTypeUi.HIKE,
+    val selectedTripId: String? = null,
     val selectedRouteId: String? = null,
     val selectedPoiIds: Set<String> = emptySet(),
     val photoUris: List<String> = emptyList(),
@@ -36,6 +50,7 @@ data class ProfileUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val feedLayout: ProfileFeedLayout = ProfileFeedLayout.LIST,
+    val journalFilter: JournalFilter = JournalFilter.ALL,
     val activities: List<ActivityUiModel> = emptyList(),
     val isCreatePostOpen: Boolean = false,
     val postCreateDraft: PostCreateDraft = PostCreateDraft(),
@@ -96,17 +111,33 @@ class ProfileViewModel(
     }
 
     fun toggleBookmark(id: String) {
-        _state.update { state ->
-            state.copy(
-                activities = state.activities.map { item ->
-                    if (item.id == id) item.copy(bookmarked = !item.bookmarked) else item
+        val current = _state.value.activities.firstOrNull { it.id == id } ?: return
+        scope.launch {
+            val result = if (current.bookmarked) {
+                postsRepository.unsavePost(id)
+            } else {
+                postsRepository.savePost(id)
+            }
+            when (result) {
+                is ApiResult.Success -> _state.update { state ->
+                    state.copy(
+                        activities = state.activities.map { item ->
+                            if (item.id == id) item.copy(bookmarked = !item.bookmarked) else item
+                        }
+                    )
                 }
-            )
+
+                else -> _state.update { it.copy(postCreateError = result.message()) }
+            }
         }
     }
 
     fun setLayout(layout: ProfileFeedLayout) {
         _state.update { it.copy(feedLayout = layout) }
+    }
+
+    fun setJournalFilter(filter: JournalFilter) {
+        _state.update { it.copy(journalFilter = filter) }
     }
 
     fun openCreatePost() {
@@ -123,6 +154,22 @@ class ProfileViewModel(
 
     fun onPostDescriptionChanged(value: String) {
         _state.update { it.copy(postCreateDraft = it.postCreateDraft.copy(description = value), postCreateError = null) }
+    }
+
+    fun onPostAudienceSelected(value: PostAudienceUi) {
+        _state.update { it.copy(postCreateDraft = it.postCreateDraft.copy(audience = value), postCreateError = null) }
+    }
+
+    fun onPostTypeSelected(value: PostTypeUi) {
+        _state.update { it.copy(postCreateDraft = it.postCreateDraft.copy(type = value), postCreateError = null) }
+    }
+
+    fun onPostActivitySelected(value: ActivityTypeUi) {
+        _state.update { it.copy(postCreateDraft = it.postCreateDraft.copy(activity = value), postCreateError = null) }
+    }
+
+    fun onPostTripSelected(tripId: String?) {
+        _state.update { it.copy(postCreateDraft = it.postCreateDraft.copy(selectedTripId = tripId), postCreateError = null) }
     }
 
     fun onPostRouteSelected(routeId: String?) {
@@ -169,8 +216,10 @@ class ProfileViewModel(
 
     fun saveCreatedPost(
         validationMessage: String,
+        availableTrips: List<TripUiModel>,
         availableRoutes: List<RouteUiModel>,
         availablePois: List<PoiUiModel>,
+        onSuccess: (() -> Unit)? = null,
     ): Boolean {
         val currentState = _state.value
         val draft = currentState.postCreateDraft
@@ -180,6 +229,7 @@ class ProfileViewModel(
             return false
         }
 
+        val selectedTripId = draft.selectedTripId?.takeIf { id -> availableTrips.any { it.id == id } }
         val selectedRouteId = draft.selectedRouteId?.takeIf { id -> availableRoutes.any { it.id == id } }
         val selectedPoiIds = draft.selectedPoiIds.filter { id -> availablePois.any { it.id == id } }
 
@@ -190,19 +240,26 @@ class ProfileViewModel(
                     title = title,
                     description = draft.description.trim(),
                     localPhotoPaths = draft.photoUris,
+                    audience = draft.audience,
+                    selectedTripId = selectedTripId,
                     selectedRouteId = selectedRouteId,
                     selectedPoiIds = selectedPoiIds,
+                    type = draft.type,
+                    activity = draft.activity,
                 )
             ) {
-                is ApiResult.Success -> _state.update {
-                    it.copy(
-                        isSaving = false,
-                        activities = listOf(result.data) + it.activities,
-                        userName = if (it.userName.isBlank()) result.data.author else it.userName,
-                        isCreatePostOpen = false,
-                        postCreateDraft = PostCreateDraft(),
-                        postCreateError = null,
-                    )
+                is ApiResult.Success -> {
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            activities = listOf(result.data) + it.activities,
+                            userName = if (it.userName.isBlank()) result.data.author else it.userName,
+                            isCreatePostOpen = false,
+                            postCreateDraft = PostCreateDraft(),
+                            postCreateError = null,
+                        )
+                    }
+                    onSuccess?.invoke()
                 }
 
                 else -> _state.update {

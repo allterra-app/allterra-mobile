@@ -1,10 +1,13 @@
 package com.allterra.presentation.profile
 
 import com.allterra.core.result.ApiResult
+import com.allterra.domain.repository.FeedPageResult
 import com.allterra.domain.repository.PostsRepository
 import com.allterra.presentation.common.model.ActivityUiModel
 import com.allterra.presentation.common.model.PoiUiModel
 import com.allterra.presentation.common.model.RouteUiModel
+import com.allterra.presentation.trips.TripStatus
+import com.allterra.presentation.trips.TripUiModel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -55,6 +58,7 @@ class ProfileViewModelTest {
         viewModel.openCreatePost()
         viewModel.onPostTitleChanged("My hike")
         viewModel.onPostDescriptionChanged("Great weather")
+        viewModel.onPostTripSelected("trip-1")
         viewModel.onPostRouteSelected("route-1")
         viewModel.togglePostPoi("poi-1")
         viewModel.addCreatePhotos(
@@ -65,6 +69,7 @@ class ProfileViewModelTest {
 
         val saved = viewModel.saveCreatedPost(
             validationMessage = "Invalid",
+            availableTrips = listOf(testTrip()),
             availableRoutes = listOf(testRoute()),
             availablePois = listOf(testPoi()),
         )
@@ -73,6 +78,7 @@ class ProfileViewModelTest {
         assertTrue(saved)
         assertEquals(2, viewModel.state.value.activities.size)
         assertTrue(viewModel.state.value.activities.first().id.startsWith("post_"))
+        assertEquals("trip-1", viewModel.state.value.activities.first().tripId)
         assertEquals("route-1", viewModel.state.value.activities.first().routeId)
         assertEquals(listOf("poi-1"), viewModel.state.value.activities.first().poiIds)
         assertEquals(2, viewModel.state.value.activities.first().photoUris.size)
@@ -88,9 +94,12 @@ class ProfileViewModelTest {
         )
         advanceUntilIdle()
         viewModel.openCreatePost()
+        viewModel.onPostTripSelected("trip-1")
+        viewModel.onPostRouteSelected("route-1")
 
         val saved = viewModel.saveCreatedPost(
             validationMessage = "Invalid",
+            availableTrips = listOf(testTrip()),
             availableRoutes = emptyList(),
             availablePois = emptyList(),
         )
@@ -105,7 +114,15 @@ private class FakePostsRepository(
 ) : PostsRepository {
     private val feedPosts = mutableListOf<ActivityUiModel>().apply { addAll(myPosts) }
 
-    override suspend fun getFeedPosts(): ApiResult<List<ActivityUiModel>> = ApiResult.Success(feedPosts.toList())
+    override suspend fun getFeedPosts(page: Int, size: Int): ApiResult<FeedPageResult> = ApiResult.Success(
+        FeedPageResult(
+            items = feedPosts.toList(),
+            page = page,
+            size = size,
+            totalItems = feedPosts.size.toLong(),
+            hasNext = false,
+        )
+    )
 
     override suspend fun getMyPosts(): ApiResult<List<ActivityUiModel>> = ApiResult.Success(feedPosts.toList())
 
@@ -115,8 +132,12 @@ private class FakePostsRepository(
         title: String,
         description: String,
         localPhotoPaths: List<String>,
+        audience: com.allterra.presentation.common.model.PostAudienceUi,
+        selectedTripId: String?,
         selectedRouteId: String?,
         selectedPoiIds: List<String>,
+        type: com.allterra.presentation.common.model.PostTypeUi?,
+        activity: com.allterra.presentation.common.model.ActivityTypeUi?,
     ): ApiResult<ActivityUiModel> {
         val created = ActivityUiModel(
             id = "post_",
@@ -125,6 +146,7 @@ private class FakePostsRepository(
             author = "Tester",
             addedAt = "20.02.2026",
             updatedAt = "20.02.2026",
+            tripId = selectedTripId,
             routeId = selectedRouteId,
             poiIds = selectedPoiIds,
             photoUris = localPhotoPaths,
@@ -137,6 +159,15 @@ private class FakePostsRepository(
         feedPosts.removeAll { it.id == postId }
         return ApiResult.Success(Unit)
     }
+    override suspend fun getMySavedPostIds(): ApiResult<Set<String>> = ApiResult.Success(emptySet())
+    override suspend fun savePost(postId: String): ApiResult<Unit> = ApiResult.Success(Unit)
+    override suspend fun unsavePost(postId: String): ApiResult<Unit> = ApiResult.Success(Unit)
+    override suspend fun getMyNotifications(): ApiResult<List<com.allterra.presentation.common.model.NotificationUiModel>> =
+        ApiResult.Success(emptyList())
+    override suspend fun markNotificationRead(notificationId: String): ApiResult<com.allterra.presentation.common.model.NotificationUiModel> =
+        ApiResult.UnknownError("Not used")
+    override suspend fun likePost(postId: String): ApiResult<Unit> = ApiResult.Success(Unit)
+    override suspend fun unlikePost(postId: String): ApiResult<Unit> = ApiResult.Success(Unit)
 }
 
 private fun testActivity() = ActivityUiModel(
@@ -153,6 +184,14 @@ private fun testRoute() = RouteUiModel(
     title = "Route",
     date = "20.02.2026",
     source = "GPX",
+)
+
+private fun testTrip() = TripUiModel(
+    id = "trip-1",
+    title = "Trip",
+    region = "Tatras",
+    status = TripStatus.Planned,
+    dates = "20.02.2026 - 22.02.2026",
 )
 
 private fun testPoi() = PoiUiModel(

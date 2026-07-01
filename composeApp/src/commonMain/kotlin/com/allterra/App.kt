@@ -20,6 +20,8 @@ import com.allterra.presentation.common.components.redesign.AllterraSheet
 import com.allterra.presentation.dashboard.DashboardScreen
 import com.allterra.presentation.feed.FeedScreen
 import com.allterra.presentation.feed.FeedViewModel
+import com.allterra.presentation.feed.NotificationsScreen
+import com.allterra.presentation.feed.rememberPostShareLauncher
 import com.allterra.presentation.gear.GearInventoryScreen
 import com.allterra.presentation.gear.GearViewModel
 import com.allterra.presentation.localization.LocalAppLanguage
@@ -31,7 +33,11 @@ import com.allterra.presentation.packing.PackingScreen
 import com.allterra.presentation.packing.PackingViewModel
 import com.allterra.presentation.pois.PoisScreen
 import com.allterra.presentation.pois.PoisViewModel
+import com.allterra.presentation.pois.rememberPoiPhotoPicker
+import com.allterra.presentation.post.PostComposerScreen
+import com.allterra.presentation.post.PostViewerScreen
 import com.allterra.presentation.profile.ProfileViewModel
+import com.allterra.presentation.profile.ProfileScreen
 import com.allterra.presentation.root.*
 import com.allterra.presentation.routes.RoutesScreen
 import com.allterra.presentation.routes.RoutesViewModel
@@ -120,8 +126,21 @@ fun App() {
                             val poisState by poisViewModel.state.collectAsStateWithLifecycle()
                             val profileState by profileViewModel.state.collectAsStateWithLifecycle()
                             val walletState by walletViewModel.state.collectAsStateWithLifecycle()
+                            val feedState by feedViewModel.state.collectAsStateWithLifecycle()
+                            val tripsState by tripViewModel.state.collectAsStateWithLifecycle()
+                            val postPhotoPicker = rememberPoiPhotoPicker(
+                                onPhotosPicked = { uris ->
+                                    profileViewModel.addCreatePhotos(
+                                        photoUris = uris,
+                                        maxPhotos = com.allterra.presentation.post.MAX_POST_PHOTOS,
+                                        limitMessage = strings.postPhotoLimitReached,
+                                    )
+                                },
+                                onReadError = { profileViewModel.onPostPhotoReadError(strings.postPhotoReadError) },
+                            )
 
                             var showRoutesLibrary by remember { mutableStateOf(false) }
+                            val postShareLauncher = rememberPostShareLauncher()
 
                             LaunchedEffect(rootState.stage) {
                                 feedViewModel.refresh()
@@ -182,26 +201,103 @@ fun App() {
                                         }
                                     }
 
-                                    rootState.overlay == MainOverlay.PROFILE -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                        Text("Profile Placeholder (Task 12)", style = AllterraTheme.typography.displayM)
-                                        AllterraButton("Back", modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 100.dp)) {
+                                    rootState.overlay == MainOverlay.PROFILE -> ProfileScreen(
+                                        viewModel = profileViewModel,
+                                        availableTrips = tripsState.items,
+                                        availableRoutes = routesState.items,
+                                        availablePois = poisState.items,
+                                        onOpenPois = rootViewModel::openPoisFromProfile,
+                                        onOpenRoutes = rootViewModel::openRoutesFromProfile,
+                                        onOpenWardrobe = rootViewModel::openGearInventory,
+                                        onLogout = rootViewModel::onLogout,
+                                        onOpenPost = rootViewModel::openPostView,
+                                    )
+
+                                    rootState.overlay == MainOverlay.POST_CREATE -> PostComposerScreen(
+                                        state = profileState,
+                                        trips = tripsState.items,
+                                        routes = routesState.items,
+                                        pois = poisState.items,
+                                        onBack = {
+                                            profileViewModel.closeCreatePost()
                                             rootViewModel.closeOverlay()
+                                        },
+                                        onTitleChanged = profileViewModel::onPostTitleChanged,
+                                        onDescriptionChanged = profileViewModel::onPostDescriptionChanged,
+                                        onTypeSelected = profileViewModel::onPostTypeSelected,
+                                        onActivitySelected = profileViewModel::onPostActivitySelected,
+                                        onAudienceSelected = profileViewModel::onPostAudienceSelected,
+                                        onTripSelected = profileViewModel::onPostTripSelected,
+                                        onRouteSelected = profileViewModel::onPostRouteSelected,
+                                        onTogglePoi = profileViewModel::togglePostPoi,
+                                        onAddPhotos = { limit ->
+                                            postPhotoPicker.launch(limit)
+                                        },
+                                        onRemovePhoto = profileViewModel::removeCreatePhoto,
+                                        onSave = {
+                                            profileViewModel.saveCreatedPost(
+                                                validationMessage = strings.postCreationValidation,
+                                                availableTrips = tripsState.items,
+                                                availableRoutes = routesState.items,
+                                                availablePois = poisState.items,
+                                                onSuccess = {
+                                                    feedViewModel.refresh()
+                                                    rootViewModel.closeOverlay()
+                                                },
+                                            )
+                                        },
+                                    )
+
+                                    rootState.overlay == MainOverlay.POST_VIEW -> {
+                                        val post = (feedState.activities + profileState.activities)
+                                            .distinctBy { it.id }
+                                            .firstOrNull { it.id == rootState.selectedPostId }
+                                        if (post != null) {
+                                            PostViewerScreen(
+                                                item = post,
+                                                tripTitle = tripsState.items.firstOrNull { it.id == post.tripId }?.title,
+                                                routeTitle = routesState.items.firstOrNull { it.id == post.routeId }?.title,
+                                                onBack = rootViewModel::closeOverlay,
+                                                onToggleLike = feedViewModel::toggleLike,
+                                                onToggleBookmark = feedViewModel::toggleBookmark,
+                                                onShare = {
+                                                    postShareLauncher.share(post.title, post.description)
+                                                },
+                                            )
                                         }
                                     }
+
+                                    rootState.overlay == MainOverlay.NOTIFICATIONS -> NotificationsScreen(
+                                        items = feedState.notifications,
+                                        isLoading = feedState.isNotificationsLoading,
+                                        onBack = rootViewModel::closeOverlay,
+                                        onOpen = feedViewModel::markNotificationRead,
+                                    )
 
                                     rootState.selectedMainTab == MainTab.HOME -> DashboardScreen(
                                         userName = profileState.userName.ifBlank { "Explorer" },
                                         onOpenProfile = rootViewModel::openProfile,
-                                        onOpenNotifications = {}, 
+                                        onOpenNotifications = rootViewModel::openNotifications,
                                         onOpenWallet = { rootViewModel.onMainTabSelected(MainTab.WALLET) },
-                                        onNewPost = { rootViewModel.onMainTabSelected(MainTab.FEED) },
+                                        onNewPost = {
+                                            profileViewModel.openCreatePost()
+                                            rootViewModel.openPostCreate()
+                                        },
                                         onOpenTripCreate = { rootViewModel.onMainTabSelected(MainTab.TRIPS) },
                                         onOpenGear = rootViewModel::openGearInventory,
                                         onOpenMap = { rootViewModel.onMainTabSelected(MainTab.MAP) },
                                         onSeeAllTrips = { rootViewModel.onMainTabSelected(MainTab.TRIPS) }
                                     )
 
-                                    rootState.selectedMainTab == MainTab.FEED -> FeedScreen(viewModel = feedViewModel)
+                                    rootState.selectedMainTab == MainTab.FEED -> FeedScreen(
+                                        viewModel = feedViewModel,
+                                        onCreatePost = {
+                                            profileViewModel.openCreatePost()
+                                            rootViewModel.openPostCreate()
+                                        },
+                                        onOpenPost = rootViewModel::openPostView,
+                                        onOpenNotifications = rootViewModel::openNotifications,
+                                    )
 
                                     rootState.selectedMainTab == MainTab.TRIPS -> TripsScreen(
                                         viewModel = tripViewModel,

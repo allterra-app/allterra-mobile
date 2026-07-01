@@ -11,6 +11,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -22,6 +23,28 @@ class PostApiImpl(
     private val httpClient: HttpClient,
     private val tokenStorage: TokenStorage,
 ) : PostApi {
+
+    override suspend fun getFeed(page: Int, size: Int): ApiResult<FeedPageDto> {
+        val accessToken = tokenStorage.getAccessToken()
+            ?: return ApiResult.Unauthorized("Missing access token")
+
+        return try {
+            val response = httpClient.get("${AppConfig.baseUrl}/feed") {
+                header(HttpHeaders.Authorization, "Bearer $accessToken")
+                url {
+                    parameters.append("page", page.toString())
+                    parameters.append("size", size.toString())
+                }
+            }
+            if (response.status.isSuccess()) {
+                ApiResult.Success(response.body<FeedPageDto>())
+            } else {
+                mapErrorResponse(response.status.value, response.bodyAsText())
+            }
+        } catch (exception: Throwable) {
+            mapThrowableToApiResult(exception)
+        }
+    }
 
     override suspend fun getAll(): ApiResult<List<PostDto>> {
         val accessToken = tokenStorage.getAccessToken()
@@ -47,6 +70,24 @@ class PostApiImpl(
 
         return try {
             val response = httpClient.get("${AppConfig.baseUrl}/posts/users/$userId") {
+                header(HttpHeaders.Authorization, "Bearer $accessToken")
+            }
+            if (response.status.isSuccess()) {
+                ApiResult.Success(response.body<List<PostDto>>())
+            } else {
+                mapErrorResponse(response.status.value, response.bodyAsText())
+            }
+        } catch (exception: Throwable) {
+            mapThrowableToApiResult(exception)
+        }
+    }
+
+    override suspend fun getSavedByUser(userId: String): ApiResult<List<PostDto>> {
+        val accessToken = tokenStorage.getAccessToken()
+            ?: return ApiResult.Unauthorized("Missing access token")
+
+        return try {
+            val response = httpClient.get("${AppConfig.baseUrl}/posts/users/$userId/saved") {
                 header(HttpHeaders.Authorization, "Bearer $accessToken")
             }
             if (response.status.isSuccess()) {
@@ -97,6 +138,36 @@ class PostApiImpl(
         }
     }
 
+    override suspend fun saveForUser(userId: String, postId: String): ApiResult<Unit> {
+        val accessToken = tokenStorage.getAccessToken()
+            ?: return ApiResult.Unauthorized("Missing access token")
+
+        return try {
+            val response = httpClient.put("${AppConfig.baseUrl}/posts/users/$userId/saved/$postId") {
+                header(HttpHeaders.Authorization, "Bearer $accessToken")
+            }
+            if (response.status.isSuccess()) ApiResult.Success(Unit)
+            else mapErrorResponse(response.status.value, response.bodyAsText())
+        } catch (exception: Throwable) {
+            mapThrowableToApiResult(exception)
+        }
+    }
+
+    override suspend fun unsaveForUser(userId: String, postId: String): ApiResult<Unit> {
+        val accessToken = tokenStorage.getAccessToken()
+            ?: return ApiResult.Unauthorized("Missing access token")
+
+        return try {
+            val response = httpClient.delete("${AppConfig.baseUrl}/posts/users/$userId/saved/$postId") {
+                header(HttpHeaders.Authorization, "Bearer $accessToken")
+            }
+            if (response.status.isSuccess()) ApiResult.Success(Unit)
+            else mapErrorResponse(response.status.value, response.bodyAsText())
+        } catch (exception: Throwable) {
+            mapThrowableToApiResult(exception)
+        }
+    }
+
     override suspend fun deleteForUser(userId: String, postId: String): ApiResult<Unit> {
         val accessToken = tokenStorage.getAccessToken()
             ?: return ApiResult.Unauthorized("Missing access token")
@@ -110,6 +181,36 @@ class PostApiImpl(
             } else {
                 mapErrorResponse(response.status.value, response.bodyAsText())
             }
+        } catch (exception: Throwable) {
+            mapThrowableToApiResult(exception)
+        }
+    }
+
+    override suspend fun likePost(postId: String): ApiResult<Unit> {
+        val accessToken = tokenStorage.getAccessToken()
+            ?: return ApiResult.Unauthorized("Missing access token")
+
+        return try {
+            val response = httpClient.put("${AppConfig.baseUrl}/posts/$postId/like") {
+                header(HttpHeaders.Authorization, "Bearer $accessToken")
+            }
+            if (response.status.isSuccess()) ApiResult.Success(Unit)
+            else mapErrorResponse(response.status.value, response.bodyAsText())
+        } catch (exception: Throwable) {
+            mapThrowableToApiResult(exception)
+        }
+    }
+
+    override suspend fun unlikePost(postId: String): ApiResult<Unit> {
+        val accessToken = tokenStorage.getAccessToken()
+            ?: return ApiResult.Unauthorized("Missing access token")
+
+        return try {
+            val response = httpClient.delete("${AppConfig.baseUrl}/posts/$postId/like") {
+                header(HttpHeaders.Authorization, "Bearer $accessToken")
+            }
+            if (response.status.isSuccess()) ApiResult.Success(Unit)
+            else mapErrorResponse(response.status.value, response.bodyAsText())
         } catch (exception: Throwable) {
             mapThrowableToApiResult(exception)
         }
