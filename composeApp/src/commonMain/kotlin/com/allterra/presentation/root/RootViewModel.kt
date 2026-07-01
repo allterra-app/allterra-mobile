@@ -31,6 +31,9 @@ enum class MainOverlay {
     POIS,
     SETTINGS,
     PROFILE,
+    POST_CREATE,
+    POST_VIEW,
+    NOTIFICATIONS,
     WALLET_ADD,
     WALLET_VIEW,
     GEAR_INVENTORY,
@@ -44,6 +47,7 @@ data class RootUiState(
     val overlay: MainOverlay = MainOverlay.NONE,
     val selectedWalletItemId: String? = null,
     val selectedTripId: String? = null,
+    val selectedPostId: String? = null,
     val language: AppLanguage = AppLanguage.EN,
     val backdropIndex: Int = 0,
 )
@@ -150,6 +154,18 @@ class RootViewModel(
         _state.update { it.copy(overlay = MainOverlay.PROFILE) }
     }
 
+    fun openPostCreate() {
+        _state.update { it.copy(overlay = MainOverlay.POST_CREATE) }
+    }
+
+    fun openPostView(id: String) {
+        _state.update { it.copy(overlay = MainOverlay.POST_VIEW, selectedPostId = id) }
+    }
+
+    fun openNotifications() {
+        _state.update { it.copy(overlay = MainOverlay.NOTIFICATIONS) }
+    }
+
     fun openWalletAdd() {
         _state.update { it.copy(overlay = MainOverlay.WALLET_ADD) }
     }
@@ -175,7 +191,14 @@ class RootViewModel(
     }
 
     fun closeOverlay() {
-        _state.update { it.copy(overlay = MainOverlay.NONE, selectedTripId = null) }
+        _state.update {
+            it.copy(
+                overlay = MainOverlay.NONE,
+                selectedTripId = null,
+                selectedPostId = null,
+                selectedWalletItemId = if (it.overlay == MainOverlay.WALLET_VIEW) null else it.selectedWalletItemId,
+            )
+        }
     }
 
     private fun bootstrap() {

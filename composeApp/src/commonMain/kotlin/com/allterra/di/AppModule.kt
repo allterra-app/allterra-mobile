@@ -15,6 +15,8 @@ import com.allterra.network.document.DocumentApi
 import com.allterra.network.gear.GearApi
 import com.allterra.network.media.MediaApi
 import com.allterra.network.media.MediaApiImpl
+import com.allterra.network.notification.NotificationApi
+import com.allterra.network.notification.NotificationApiImpl
 import com.allterra.network.packing.PackingApi
 import com.allterra.network.poi.PoiApi
 import com.allterra.network.poi.PoiApiImpl
@@ -56,6 +58,7 @@ val appModule = module {
     single<PostApi> { PostApiImpl(httpClient = get(), tokenStorage = get()) }
     single<PostPhotoApi> { PostPhotoApiImpl(httpClient = get(), tokenStorage = get()) }
     single<MediaApi> { MediaApiImpl(httpClient = get(), tokenStorage = get()) }
+    single<NotificationApi> { NotificationApiImpl(httpClient = get(), tokenStorage = get()) }
     single<TokenStorage> { PersistentTokenStorage() }
     single<SessionPreferences> { SessionPreferencesImpl() }
     single<AuthRepository> { AuthRepositoryImpl(authApi = get(), tokenStorage = get()) }
@@ -71,6 +74,7 @@ val appModule = module {
             postApi = get(),
             postPhotoApi = get(),
             mediaApi = get(),
+            notificationApi = get(),
         )
     }
 

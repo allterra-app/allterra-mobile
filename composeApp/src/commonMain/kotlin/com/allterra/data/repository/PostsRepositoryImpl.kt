@@ -1,17 +1,27 @@
 package com.allterra.data.repository
 
 import com.allterra.core.result.ApiResult
+import com.allterra.domain.repository.FeedPageResult
 import com.allterra.domain.repository.PostsRepository
 import com.allterra.network.media.MediaApi
 import com.allterra.network.media.toAbsoluteMediaUrl
+import com.allterra.network.notification.NotificationApi
+import com.allterra.network.notification.NotificationDto
+import com.allterra.network.post.ActivityTypeDto
 import com.allterra.network.post.PostApi
+import com.allterra.network.post.PostAudienceDto
 import com.allterra.network.post.PostCreateRequestDto
 import com.allterra.network.post.PostDto
 import com.allterra.network.post.PostPhotoApi
 import com.allterra.network.post.PostPhotoCreateRequestDto
+import com.allterra.network.post.PostTypeDto
 import com.allterra.network.user.UserApi
 import com.allterra.platform.LocalFileAccess
+import com.allterra.presentation.common.model.ActivityTypeUi
 import com.allterra.presentation.common.model.ActivityUiModel
+import com.allterra.presentation.common.model.NotificationUiModel
+import com.allterra.presentation.common.model.PostAudienceUi
+import com.allterra.presentation.common.model.PostTypeUi
 import com.allterra.presentation.common.time.currentUiDate
 
 class PostsRepositoryImpl(
@@ -19,11 +29,43 @@ class PostsRepositoryImpl(
     private val postApi: PostApi,
     private val postPhotoApi: PostPhotoApi,
     private val mediaApi: MediaApi,
+    private val notificationApi: NotificationApi,
 ) : PostsRepository {
 
-    override suspend fun getFeedPosts(): ApiResult<List<ActivityUiModel>> {
-        return when (val postsResult = postApi.getAll()) {
-            is ApiResult.Success -> ApiResult.Success(postsResult.data.map { it.toUiModel() })
+    private var cachedUserId: String? = null
+
+    private suspend fun resolveUserId(): ApiResult<String> {
+        cachedUserId?.let { return ApiResult.Success(it) }
+        return when (val meResult = userApi.me()) {
+            is ApiResult.Success -> {
+                cachedUserId = meResult.data.id
+                ApiResult.Success(meResult.data.id)
+            }
+            is ApiResult.ValidationError -> ApiResult.ValidationError(meResult.message, meResult.fields)
+            is ApiResult.Unauthorized -> ApiResult.Unauthorized(meResult.message)
+            is ApiResult.Forbidden -> ApiResult.Forbidden(meResult.message)
+            is ApiResult.NotFound -> ApiResult.NotFound(meResult.message)
+            is ApiResult.ServerError -> ApiResult.ServerError(meResult.message)
+            is ApiResult.NetworkError -> ApiResult.NetworkError(meResult.message)
+            is ApiResult.UnknownError -> ApiResult.UnknownError(meResult.message)
+        }
+    }
+
+    override suspend fun getFeedPosts(page: Int, size: Int): ApiResult<FeedPageResult> {
+        val savedPostIds = when (val savedResult = getMySavedPostIds()) {
+            is ApiResult.Success -> savedResult.data
+            else -> emptySet()
+        }
+        return when (val postsResult = postApi.getFeed(page, size)) {
+            is ApiResult.Success -> ApiResult.Success(
+                FeedPageResult(
+                    items = postsResult.data.items.map { it.toUiModel(bookmarkedPostIds = savedPostIds) },
+                    page = postsResult.data.page,
+                    size = postsResult.data.size,
+                    totalItems = postsResult.data.totalItems,
+                    hasNext = postsResult.data.hasNext,
+                )
+            )
             is ApiResult.ValidationError -> ApiResult.ValidationError(postsResult.message, postsResult.fields)
             is ApiResult.Unauthorized -> ApiResult.Unauthorized(postsResult.message)
             is ApiResult.Forbidden -> ApiResult.Forbidden(postsResult.message)
@@ -46,12 +88,20 @@ class PostsRepositoryImpl(
             is ApiResult.UnknownError -> return ApiResult.UnknownError(meResult.message)
         }
 
+        cachedUserId = me.id
+
+        val savedPostIds = when (val savedResult = postApi.getSavedByUser(me.id)) {
+            is ApiResult.Success -> savedResult.data.mapTo(linkedSetOf()) { it.id }
+            else -> emptySet()
+        }
+
         return when (val postsResult = postApi.getByUser(me.id)) {
             is ApiResult.Success -> ApiResult.Success(
                 postsResult.data.map {
                     it.toUiModel(
                         fallbackAuthor = me.username?.takeIf { value -> value.isNotBlank() }
                             ?: me.email.substringBefore('@').ifBlank { "User" },
+                        bookmarkedPostIds = savedPostIds,
                     )
                 }
             )
@@ -84,12 +134,79 @@ class PostsRepositoryImpl(
         }
     }
 
+    override suspend fun getMySavedPostIds(): ApiResult<Set<String>> {
+        return when (val idResult = resolveUserId()) {
+            is ApiResult.Success -> {
+                val userId = idResult.data
+                when (val result = postApi.getSavedByUser(userId)) {
+                    is ApiResult.Success -> ApiResult.Success(result.data.mapTo(linkedSetOf()) { it.id })
+                    else -> result.asPostResult()
+                }
+            }
+            else -> idResult.asPostResult()
+        }
+    }
+
+    override suspend fun savePost(postId: String): ApiResult<Unit> {
+        return when (val idResult = resolveUserId()) {
+            is ApiResult.Success -> {
+                when (val result = postApi.saveForUser(idResult.data, postId)) {
+                    is ApiResult.Success -> ApiResult.Success(Unit)
+                    else -> result.asPostResult()
+                }
+            }
+            else -> idResult.asPostResult()
+        }
+    }
+
+    override suspend fun unsavePost(postId: String): ApiResult<Unit> {
+        return when (val idResult = resolveUserId()) {
+            is ApiResult.Success -> {
+                when (val result = postApi.unsaveForUser(idResult.data, postId)) {
+                    is ApiResult.Success -> ApiResult.Success(Unit)
+                    else -> result.asPostResult()
+                }
+            }
+            else -> idResult.asPostResult()
+        }
+    }
+
+    override suspend fun getMyNotifications(): ApiResult<List<NotificationUiModel>> {
+        return when (val result = notificationApi.getMine()) {
+            is ApiResult.Success -> ApiResult.Success(result.data.map { it.toUiModel() })
+            is ApiResult.ValidationError -> ApiResult.ValidationError(result.message, result.fields)
+            is ApiResult.Unauthorized -> ApiResult.Unauthorized(result.message)
+            is ApiResult.Forbidden -> ApiResult.Forbidden(result.message)
+            is ApiResult.NotFound -> ApiResult.NotFound(result.message)
+            is ApiResult.ServerError -> ApiResult.ServerError(result.message)
+            is ApiResult.NetworkError -> ApiResult.NetworkError(result.message)
+            is ApiResult.UnknownError -> ApiResult.UnknownError(result.message)
+        }
+    }
+
+    override suspend fun markNotificationRead(notificationId: String): ApiResult<NotificationUiModel> {
+        return when (val result = notificationApi.markRead(notificationId)) {
+            is ApiResult.Success -> ApiResult.Success(result.data.toUiModel())
+            is ApiResult.ValidationError -> ApiResult.ValidationError(result.message, result.fields)
+            is ApiResult.Unauthorized -> ApiResult.Unauthorized(result.message)
+            is ApiResult.Forbidden -> ApiResult.Forbidden(result.message)
+            is ApiResult.NotFound -> ApiResult.NotFound(notificationId)
+            is ApiResult.ServerError -> ApiResult.ServerError(result.message)
+            is ApiResult.NetworkError -> ApiResult.NetworkError(result.message)
+            is ApiResult.UnknownError -> ApiResult.UnknownError(result.message)
+        }
+    }
+
     override suspend fun createMyPost(
         title: String,
         description: String,
         localPhotoPaths: List<String>,
+        audience: PostAudienceUi,
+        selectedTripId: String?,
         selectedRouteId: String?,
         selectedPoiIds: List<String>,
+        type: PostTypeUi?,
+        activity: ActivityTypeUi?,
     ): ApiResult<ActivityUiModel> {
         val me = when (val meResult = userApi.me()) {
             is ApiResult.Success -> meResult.data
@@ -104,8 +221,13 @@ class PostsRepositoryImpl(
 
         val request = PostCreateRequestDto(
             userId = me.id,
+            tripId = selectedTripId,
+            routeId = selectedRouteId,
             title = title,
             body = description.takeIf { it.isNotBlank() },
+            audience = audience.toDto(),
+            type = type?.let { PostTypeDto.valueOf(it.name) },
+            activity = activity?.let { ActivityTypeDto.valueOf(it.name) },
         )
 
         val createdPost = when (val createResult = postApi.createForUser(me.id, request)) {
@@ -155,6 +277,8 @@ class PostsRepositoryImpl(
         val uiModel = refreshed.toUiModel(fallbackAuthor = authorFallback)
         return ApiResult.Success(
             uiModel.copy(
+                audience = audience,
+                tripId = selectedTripId,
                 routeId = selectedRouteId,
                 poiIds = selectedPoiIds,
                 photoUris = if (uiModel.photoUris.isNotEmpty()) uiModel.photoUris else attachedPhotoUris,
@@ -163,26 +287,40 @@ class PostsRepositoryImpl(
     }
 
     override suspend fun deleteMyPost(postId: String): ApiResult<Unit> {
-        val me = when (val meResult = userApi.me()) {
-            is ApiResult.Success -> meResult.data
-            is ApiResult.ValidationError -> return ApiResult.ValidationError(meResult.message, meResult.fields)
-            is ApiResult.Unauthorized -> return ApiResult.Unauthorized(meResult.message)
-            is ApiResult.Forbidden -> return ApiResult.Forbidden(meResult.message)
-            is ApiResult.NotFound -> return ApiResult.NotFound(meResult.message)
-            is ApiResult.ServerError -> return ApiResult.ServerError(meResult.message)
-            is ApiResult.NetworkError -> return ApiResult.NetworkError(meResult.message)
-            is ApiResult.UnknownError -> return ApiResult.UnknownError(meResult.message)
+        return when (val idResult = resolveUserId()) {
+            is ApiResult.Success -> {
+                when (val deleteResult = postApi.deleteForUser(idResult.data, postId)) {
+                    is ApiResult.Success -> ApiResult.Success(Unit)
+                    else -> deleteResult.asPostResult()
+                }
+            }
+            else -> idResult.asPostResult()
         }
+    }
 
-        return when (val deleteResult = postApi.deleteForUser(me.id, postId)) {
+    override suspend fun likePost(postId: String): ApiResult<Unit> {
+        return when (val result = postApi.likePost(postId)) {
             is ApiResult.Success -> ApiResult.Success(Unit)
-            is ApiResult.ValidationError -> ApiResult.ValidationError(deleteResult.message, deleteResult.fields)
-            is ApiResult.Unauthorized -> ApiResult.Unauthorized(deleteResult.message)
-            is ApiResult.Forbidden -> ApiResult.Forbidden(deleteResult.message)
-            is ApiResult.NotFound -> ApiResult.NotFound(deleteResult.message)
-            is ApiResult.ServerError -> ApiResult.ServerError(deleteResult.message)
-            is ApiResult.NetworkError -> ApiResult.NetworkError(deleteResult.message)
-            is ApiResult.UnknownError -> ApiResult.UnknownError(deleteResult.message)
+            is ApiResult.ValidationError -> ApiResult.ValidationError(result.message, result.fields)
+            is ApiResult.Unauthorized -> ApiResult.Unauthorized(result.message)
+            is ApiResult.Forbidden -> ApiResult.Forbidden(result.message)
+            is ApiResult.NotFound -> ApiResult.NotFound(result.message)
+            is ApiResult.ServerError -> ApiResult.ServerError(result.message)
+            is ApiResult.NetworkError -> ApiResult.NetworkError(result.message)
+            is ApiResult.UnknownError -> ApiResult.UnknownError(result.message)
+        }
+    }
+
+    override suspend fun unlikePost(postId: String): ApiResult<Unit> {
+        return when (val result = postApi.unlikePost(postId)) {
+            is ApiResult.Success -> ApiResult.Success(Unit)
+            is ApiResult.ValidationError -> ApiResult.ValidationError(result.message, result.fields)
+            is ApiResult.Unauthorized -> ApiResult.Unauthorized(result.message)
+            is ApiResult.Forbidden -> ApiResult.Forbidden(result.message)
+            is ApiResult.NotFound -> ApiResult.NotFound(result.message)
+            is ApiResult.ServerError -> ApiResult.ServerError(result.message)
+            is ApiResult.NetworkError -> ApiResult.NetworkError(result.message)
+            is ApiResult.UnknownError -> ApiResult.UnknownError(result.message)
         }
     }
 
@@ -190,6 +328,9 @@ class PostsRepositoryImpl(
         return toAbsoluteMediaUrl(url)
     }
 }
+
+@Suppress("UNCHECKED_CAST")
+private fun <T> ApiResult<*>.asPostResult(): ApiResult<T> = this as ApiResult<T>
 
 private fun ApiResult<*>.asPostFailure(defaultMessage: String): ApiResult<Nothing> {
     return when (this) {
@@ -204,9 +345,11 @@ private fun ApiResult<*>.asPostFailure(defaultMessage: String): ApiResult<Nothin
     }
 }
 
-private fun PostDto.toUiModel(fallbackAuthor: String = "User"): ActivityUiModel {
+private fun PostDto.toUiModel(
+    fallbackAuthor: String = "User",
+    bookmarkedPostIds: Set<String> = emptySet(),
+): ActivityUiModel {
     val addedDate = isoDateToUiDate(createdAt).ifBlank { currentUiDate() }
-    val updatedDate = isoDateToUiDate(modifiedAt).ifBlank { addedDate }
     val author = user?.username?.takeIf { it.isNotBlank() }
         ?: user?.email?.substringBefore('@')?.takeIf { it.isNotBlank() }
         ?: fallbackAuthor
@@ -217,9 +360,64 @@ private fun PostDto.toUiModel(fallbackAuthor: String = "User"): ActivityUiModel 
         description = body.orEmpty(),
         author = author,
         addedAt = addedDate,
-        updatedAt = updatedDate,
+        updatedAt = isoDateToUiDate(modifiedAt).ifBlank { addedDate },
+        audience = audience.toUiModel(),
+        type = type.toUiModel(),
+        activity = activity.toUiModel(),
+        tripId = tripId,
+        routeId = routeId,
         photoUris = photos.orEmpty().map { toAbsoluteMediaUrl(it.url) },
+        likeCount = likeCount,
+        liked = liked,
+        bookmarked = id in bookmarkedPostIds,
     )
+}
+
+private fun PostTypeDto?.toUiModel(): PostTypeUi {
+    return when (this) {
+        PostTypeDto.CHECK_IN -> PostTypeUi.CHECK_IN
+        PostTypeDto.ROUTE -> PostTypeUi.ROUTE
+        PostTypeDto.NOTE -> PostTypeUi.NOTE
+        PostTypeDto.GEAR -> PostTypeUi.GEAR
+        null -> PostTypeUi.CHECK_IN
+    }
+}
+
+private fun ActivityTypeDto?.toUiModel(): ActivityTypeUi {
+    return when (this) {
+        ActivityTypeDto.HIKE -> ActivityTypeUi.HIKE
+        ActivityTypeDto.BIKEPACKING -> ActivityTypeUi.BIKEPACKING
+        ActivityTypeDto.ALPINISM -> ActivityTypeUi.ALPINISM
+        ActivityTypeDto.TREK -> ActivityTypeUi.TREK
+        ActivityTypeDto.CLIMB -> ActivityTypeUi.CLIMB
+        null -> ActivityTypeUi.HIKE
+    }
+}
+
+private fun NotificationDto.toUiModel(): NotificationUiModel {
+    return NotificationUiModel(
+        id = id,
+        title = title,
+        body = body,
+        read = read,
+        createdAt = isoDateToUiDate(createdAt).ifBlank { currentUiDate() },
+    )
+}
+
+private fun PostAudienceDto?.toUiModel(): PostAudienceUi {
+    return when (this) {
+        PostAudienceDto.FRIENDS -> PostAudienceUi.FRIENDS
+        PostAudienceDto.CLUB -> PostAudienceUi.CLUB
+        PostAudienceDto.PUBLIC, null -> PostAudienceUi.PUBLIC
+    }
+}
+
+private fun PostAudienceUi.toDto(): PostAudienceDto {
+    return when (this) {
+        PostAudienceUi.PUBLIC -> PostAudienceDto.PUBLIC
+        PostAudienceUi.FRIENDS -> PostAudienceDto.FRIENDS
+        PostAudienceUi.CLUB -> PostAudienceDto.CLUB
+    }
 }
 
 private const val MAX_SERVER_POST_PHOTOS = 10

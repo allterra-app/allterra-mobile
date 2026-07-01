@@ -1,6 +1,7 @@
 package com.allterra.presentation.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,20 +65,23 @@ import com.allterra.presentation.common.components.list.SwipeToDeleteItem
 import com.allterra.presentation.common.model.PoiUiModel
 import com.allterra.presentation.common.model.RouteUiModel
 import com.allterra.presentation.localization.appStrings
+import com.allterra.presentation.post.MAX_POST_PHOTOS
+import com.allterra.presentation.post.PostComposerScreen
 import com.allterra.presentation.pois.PoiPhotoImage
 import com.allterra.presentation.pois.rememberPoiPhotoPicker
-
-private const val MAX_POST_PHOTOS = 10
+import com.allterra.presentation.trips.TripUiModel
 
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
+    availableTrips: List<TripUiModel>,
     availableRoutes: List<RouteUiModel>,
     availablePois: List<PoiUiModel>,
     onOpenPois: () -> Unit,
     onOpenRoutes: () -> Unit,
     onOpenWardrobe: () -> Unit,
     onLogout: () -> Unit,
+    onOpenPost: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val strings = appStrings()
@@ -93,20 +97,38 @@ fun ProfileScreen(
     )
 
     if (state.isCreatePostOpen) {
-        PostCreateScreen(
+        PostComposerScreen(
             state = state,
+            trips = availableTrips,
             routes = availableRoutes,
             pois = availablePois,
             onBack = viewModel::closeCreatePost,
             onTitleChanged = viewModel::onPostTitleChanged,
             onDescriptionChanged = viewModel::onPostDescriptionChanged,
+            onTypeSelected = viewModel::onPostTypeSelected,
+            onActivitySelected = viewModel::onPostActivitySelected,
+            onAudienceSelected = viewModel::onPostAudienceSelected,
+            onTripSelected = viewModel::onPostTripSelected,
             onRouteSelected = viewModel::onPostRouteSelected,
             onTogglePoi = viewModel::togglePostPoi,
             onAddPhotos = { photoPicker.launch(it) },
             onRemovePhoto = viewModel::removeCreatePhoto,
-            onSave = { viewModel.saveCreatedPost(strings.postCreationValidation, availableRoutes, availablePois) },
+            onSave = {
+                viewModel.saveCreatedPost(
+                    validationMessage = strings.postCreationValidation,
+                    availableTrips = availableTrips,
+                    availableRoutes = availableRoutes,
+                    availablePois = availablePois,
+                )
+            },
         )
         return
+    }
+
+    val filteredActivities = when (state.journalFilter) {
+        JournalFilter.ALL -> state.activities
+        JournalFilter.TRIP_LINKED -> state.activities.filter { it.tripId != null }
+        JournalFilter.STANDALONE -> state.activities.filter { it.tripId == null }
     }
 
     Box(
@@ -195,24 +217,52 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 6.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = { viewModel.setLayout(ProfileFeedLayout.LIST) }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ViewList,
-                        contentDescription = null,
-                        tint = if (state.feedLayout == ProfileFeedLayout.LIST) Color(0xFF0B7A74) else Color(0xFF5A6E77),
-                        modifier = Modifier.size(26.dp),
-                    )
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    item {
+                        FilterChip(
+                            selected = state.journalFilter == JournalFilter.ALL,
+                            onClick = { viewModel.setJournalFilter(JournalFilter.ALL) },
+                            label = { Text(strings.journalAllFilter) },
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = state.journalFilter == JournalFilter.TRIP_LINKED,
+                            onClick = { viewModel.setJournalFilter(JournalFilter.TRIP_LINKED) },
+                            label = { Text(strings.journalTripFilter) },
+                        )
+                    }
+                    item {
+                        FilterChip(
+                            selected = state.journalFilter == JournalFilter.STANDALONE,
+                            onClick = { viewModel.setJournalFilter(JournalFilter.STANDALONE) },
+                            label = { Text(strings.journalStandaloneFilter) },
+                        )
+                    }
                 }
-                IconButton(onClick = { viewModel.setLayout(ProfileFeedLayout.GRID) }) {
-                    Icon(
-                        imageVector = Icons.Outlined.ViewComfy,
-                        contentDescription = null,
-                        tint = if (state.feedLayout == ProfileFeedLayout.GRID) Color(0xFF0B7A74) else Color(0xFF5A6E77),
-                        modifier = Modifier.size(26.dp),
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = { viewModel.setLayout(ProfileFeedLayout.LIST) }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ViewList,
+                            contentDescription = null,
+                            tint = if (state.feedLayout == ProfileFeedLayout.LIST) Color(0xFF0B7A74) else Color(0xFF5A6E77),
+                            modifier = Modifier.size(26.dp),
+                        )
+                    }
+                    IconButton(onClick = { viewModel.setLayout(ProfileFeedLayout.GRID) }) {
+                        Icon(
+                            imageVector = Icons.Outlined.ViewComfy,
+                            contentDescription = null,
+                            tint = if (state.feedLayout == ProfileFeedLayout.GRID) Color(0xFF0B7A74) else Color(0xFF5A6E77),
+                            modifier = Modifier.size(26.dp),
+                        )
+                    }
                 }
             }
 
@@ -224,12 +274,32 @@ fun ProfileScreen(
                 )
             }
 
-            if (state.feedLayout == ProfileFeedLayout.LIST) {
+            if (filteredActivities.isEmpty() && !state.isLoading) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 16.dp),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = strings.journalEmptyTitle,
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            text = strings.journalEmptyBody,
+                            modifier = Modifier.padding(top = 6.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF5A6E77),
+                        )
+                    }
+                }
+            } else if (state.feedLayout == ProfileFeedLayout.LIST) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    items(state.activities, key = { it.id }) { item ->
+                    items(filteredActivities, key = { it.id }) { item ->
                         SwipeToDeleteItem(
                             enabled = item.id !in state.deletingPostIds,
                             deleteLabel = strings.deleteAction,
@@ -244,7 +314,7 @@ fun ProfileScreen(
                                 strings = strings,
                                 onToggleLike = viewModel::toggleLike,
                                 onToggleBookmark = viewModel::toggleBookmark,
-                                onOpen = {},
+                                onOpen = onOpenPost,
                             )
                         }
                     }
@@ -256,7 +326,7 @@ fun ProfileScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    gridItems(state.activities, key = { it.id }) { item ->
+                    gridItems(filteredActivities, key = { it.id }) { item ->
                         SwipeToDeleteItem(
                             enabled = item.id !in state.deletingPostIds,
                             deleteLabel = strings.deleteAction,
@@ -266,7 +336,11 @@ fun ProfileScreen(
                             cancelActionLabel = strings.cancelAction,
                             onDelete = { viewModel.deletePost(item.id) },
                         ) {
-                            Card(modifier = Modifier.fillMaxWidth()) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onOpenPost(item.id) }
+                            ) {
                                 Text(
                                     text = item.title,
                                     modifier = Modifier.padding(8.dp),
@@ -294,346 +368,6 @@ fun ProfileScreen(
             contentColor = Color.White,
         ) {
             Icon(imageVector = Icons.Outlined.Add, contentDescription = null)
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PostCreateScreen(
-    state: ProfileUiState,
-    routes: List<RouteUiModel>,
-    pois: List<PoiUiModel>,
-    onBack: () -> Unit,
-    onTitleChanged: (String) -> Unit,
-    onDescriptionChanged: (String) -> Unit,
-    onRouteSelected: (String?) -> Unit,
-    onTogglePoi: (String) -> Unit,
-    onAddPhotos: (Int) -> Unit,
-    onRemovePhoto: (String) -> Unit,
-    onSave: () -> Unit,
-) {
-    val strings = appStrings()
-    val draft = state.postCreateDraft
-    var routeExpanded by remember { mutableStateOf(false) }
-    var poisExpanded by remember { mutableStateOf(false) }
-    val selectedRoute = routes.firstOrNull { it.id == draft.selectedRouteId }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .background(Brush.verticalGradient(listOf(Color(0xFF0A7DAF), Color(0xFFC2C7CC))))
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = null,
-                    tint = Color(0xFFE6EEF2),
-                )
-            }
-            Text(
-                text = strings.postCreateTitle,
-                color = Color.White,
-                style = MaterialTheme.typography.titleLarge,
-            )
-        }
-
-        OutlinedTextField(
-            value = draft.title,
-            onValueChange = onTitleChanged,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            label = { Text(strings.postTitleLabel) },
-            singleLine = true,
-        )
-
-        OutlinedTextField(
-            value = draft.description,
-            onValueChange = onDescriptionChanged,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            label = { Text(strings.postDescriptionLabel) },
-            minLines = 4,
-        )
-
-        Text(
-            text = strings.postRouteLabel,
-            color = Color.White,
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(top = 12.dp),
-        )
-
-        if (routes.isEmpty()) {
-            Text(
-                text = strings.postNoRoutes,
-                color = Color.White.copy(alpha = 0.82f),
-                style = MaterialTheme.typography.bodySmall,
-            )
-        } else {
-            ExposedDropdownMenuBox(
-                expanded = routeExpanded,
-                onExpandedChange = { routeExpanded = !routeExpanded },
-            ) {
-                OutlinedTextField(
-                    value = selectedRoute?.title ?: strings.noneLabel,
-                    onValueChange = {},
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
-                        .padding(top = 6.dp),
-                    readOnly = true,
-                    singleLine = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = routeExpanded) },
-                )
-                ExposedDropdownMenu(
-                    expanded = routeExpanded,
-                    onDismissRequest = { routeExpanded = false },
-                ) {
-                    DropdownMenuItem(
-                        text = {
-                            SelectionItemRow(
-                                title = strings.noneLabel,
-                                date = "",
-                            )
-                        },
-                        onClick = {
-                            onRouteSelected(null)
-                            routeExpanded = false
-                        },
-                    )
-                    routes.forEach { route ->
-                        DropdownMenuItem(
-                            text = {
-                                SelectionItemRow(
-                                    title = route.title,
-                                    date = route.date,
-                                )
-                            },
-                            onClick = {
-                                onRouteSelected(route.id)
-                                routeExpanded = false
-                            },
-                        )
-                    }
-                }
-            }
-        }
-
-        Text(
-            text = strings.postPoisLabel,
-            color = Color.White,
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.padding(top = 12.dp),
-        )
-
-        if (pois.isEmpty()) {
-            Text(
-                text = strings.postNoPois,
-                color = Color.White.copy(alpha = 0.82f),
-                style = MaterialTheme.typography.bodySmall,
-            )
-        } else {
-            ExposedDropdownMenuBox(
-                expanded = poisExpanded,
-                onExpandedChange = { poisExpanded = !poisExpanded },
-            ) {
-                OutlinedTextField(
-                    value = if (draft.selectedPoiIds.isEmpty()) strings.noneLabel else "${draft.selectedPoiIds.size}/${pois.size}",
-                    onValueChange = {},
-                    modifier = Modifier
-                        .menuAnchor()
-                        .fillMaxWidth()
-                        .padding(top = 6.dp),
-                    readOnly = true,
-                    singleLine = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = poisExpanded) },
-                )
-                ExposedDropdownMenu(
-                    expanded = poisExpanded,
-                    onDismissRequest = { poisExpanded = false },
-                ) {
-                    pois.forEach { poi ->
-                        val selected = poi.id in draft.selectedPoiIds
-                        DropdownMenuItem(
-                            text = {
-                                SelectionItemRow(
-                                    title = poi.title,
-                                    date = poi.addedAt,
-                                )
-                            },
-                            onClick = { onTogglePoi(poi.id) },
-                            trailingIcon = {
-                                if (selected) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Check,
-                                        contentDescription = null,
-                                        tint = Color(0xFF0B7A74),
-                                    )
-                                }
-                            },
-                        )
-                    }
-                    DropdownMenuItem(
-                        text = { Text(strings.cancelAction) },
-                        onClick = { poisExpanded = false },
-                    )
-                }
-            }
-            if (draft.selectedPoiIds.isNotEmpty()) {
-                LazyRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    items(pois.filter { it.id in draft.selectedPoiIds }, key = { it.id }) { poi ->
-                        FilterChip(
-                            selected = true,
-                            onClick = { onTogglePoi(poi.id) },
-                            label = { Text(poi.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        )
-                    }
-                }
-            }
-        }
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = strings.photosLabel,
-                color = Color.White,
-                style = MaterialTheme.typography.titleSmall,
-            )
-            Text(
-                text = "${draft.photoUris.size}/$MAX_POST_PHOTOS",
-                color = Color.White.copy(alpha = 0.85f),
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            items(draft.photoUris, key = { it }) { uri ->
-                Box(
-                    modifier = Modifier
-                        .size(74.dp)
-                        .clip(RoundedCornerShape(10.dp)),
-                ) {
-                    PoiPhotoImage(
-                        source = uri,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                    IconButton(
-                        onClick = { onRemovePhoto(uri) },
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .size(24.dp)
-                            .background(Color(0x9A10252D), CircleShape),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Close,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(14.dp),
-                        )
-                    }
-                }
-            }
-            item {
-                IconButton(
-                    onClick = { onAddPhotos((MAX_POST_PHOTOS - draft.photoUris.size).coerceAtLeast(0)) },
-                    enabled = draft.photoUris.size < MAX_POST_PHOTOS,
-                    modifier = Modifier
-                        .size(42.dp)
-                        .background(Color(0xFF107E76), CircleShape),
-                ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Add,
-                        contentDescription = null,
-                        tint = Color.White,
-                    )
-                }
-            }
-        }
-
-        if (draft.photoUris.isEmpty()) {
-            Text(
-                text = strings.postNoPhotosSelected,
-                modifier = Modifier.padding(top = 8.dp),
-                color = Color.White.copy(alpha = 0.85f),
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-
-        Text(
-            text = strings.postPhotosHint,
-            modifier = Modifier.padding(top = 6.dp),
-            color = Color.White.copy(alpha = 0.8f),
-            style = MaterialTheme.typography.bodySmall,
-        )
-
-        state.postCreateError?.let {
-            Text(
-                text = it,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-        }
-
-        Button(
-            onClick = onSave,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp),
-            enabled = !state.isSaving,
-        ) {
-            Text(if (state.isSaving) strings.loadingText else strings.saveAction)
-        }
-    }
-}
-
-@Composable
-private fun SelectionItemRow(
-    title: String,
-    date: String,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = title,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        if (date.isNotBlank()) {
-            Text(
-                text = date,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF5D7A86),
-                modifier = Modifier.padding(start = 10.dp),
-            )
         }
     }
 }

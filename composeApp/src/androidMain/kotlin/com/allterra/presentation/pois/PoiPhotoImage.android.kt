@@ -76,7 +76,12 @@ private fun decodeImage(source: String, accessToken: String?): android.graphics.
             loadRemoteBitmap(source, accessToken)
         }
         source.startsWith("/") -> {
-            loadRemoteBitmap(toAbsoluteMediaUrl(source), accessToken)
+            val file = File(source)
+            if (file.exists() && file.isFile) {
+                BitmapFactory.decodeFile(file.absolutePath)
+            } else {
+                loadRemoteBitmap(toAbsoluteMediaUrl(source), accessToken)
+            }
         }
         else -> {
             val file = File(source)
