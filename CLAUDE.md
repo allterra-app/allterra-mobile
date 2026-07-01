@@ -20,7 +20,7 @@ You are a Senior KMP Developer implementing the Allterra Mobile Client.
 6. **Conventional Commits:** All commits MUST follow the format defined in `docs/CONTRIBUTION.md` (Conventional Commits 1.0.0). Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`. Always lowercase, imperative mood, no period.
 7. **Git Staging Rule:** Always stage new files with `git add` so all created files are visible in diffs during review.
 8. **Approval Rule:** Never run `git commit` or `git push` without explicit user acceptance.
-9. **Task Workflow Rule:** For every new project task, create `.task/task_{n}/plan.md` at the start, decompose the task from the project backlog into executable steps, and execute strictly according to that plan.
+9. **Task Workflow Rule:** For every new project task, create `.task/task_{n}/` in this repository, with `plan.md` at the start. Decompose the task into executable steps and execute strictly according to that plan. Keep `status.md` (live progress) and optionally `summary.md` (for handoff). Update after each iteration.
 
 ## References
 - `PROJECT_CONTEXT.md` - Project vision and architecture.
