@@ -38,6 +38,8 @@ data class ActivityUiModel(
     val likeCount: Int = 0,
     val liked: Boolean = false,
     val bookmarked: Boolean = false,
+    val distanceKm: Double? = null,
+    val elevationGain: Int? = null,
 )
 
 data class NotificationUiModel(

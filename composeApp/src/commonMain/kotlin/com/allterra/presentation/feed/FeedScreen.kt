@@ -118,69 +118,76 @@ fun FeedScreen(
             }
     }
 
-    PullToRefreshBox(
-        isRefreshing = state.isRefreshing,
-        onRefresh = { viewModel.refresh(isManual = true) },
-        modifier = Modifier
-            .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing)
-            .background(AllterraTheme.colors.bg),
-    ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 108.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+    Box(modifier = Modifier.fillMaxSize()) {
+        PullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { viewModel.refresh(isManual = true) },
+            modifier = Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing)
+                .background(AllterraTheme.colors.bg),
         ) {
-            item {
-                FeedTopBar(
-                    hasUnreadNotifications = !state.notificationsSeen && state.notifications.any { !it.read },
-                    onSearchClick = { searchVisible = !searchVisible },
-                    onFilterClick = { filterVisible = !filterVisible },
-                    onNotificationsClick = {
-                        onOpenNotifications()
-                        viewModel.onNotificationsOpened()
-                    },
-                    onCreatePost = onCreatePost,
-                )
-            }
-
-            if (searchVisible) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 120.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
                 item {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = {
-                            searchQuery = it
-                            viewModel.clearActionError()
+                    FeedTopBar(
+                        hasUnreadNotifications = !state.notificationsSeen && state.notifications.any { !it.read },
+                        onSearchClick = { searchVisible = !searchVisible },
+                        onFilterClick = { filterVisible = !filterVisible },
+                        onNotificationsClick = {
+                            onOpenNotifications()
+                            viewModel.onNotificationsOpened()
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        placeholder = { Text(strings.feedSearchPlaceholder) },
                     )
                 }
-            }
 
-            item {
-                AnimatedVisibility(
-                    visible = filterVisible,
-                    enter = expandVertically(),
-                    exit = shrinkVertically()
-                ) {
-                    FeedFilterSection(
-                        selectedPostTypes = state.selectedPostTypes,
-                        selectedActivityTypes = state.selectedActivityTypes,
-                        onPostTypeToggle = viewModel::togglePostTypeFilter,
-                        onActivityTypeToggle = viewModel::toggleActivityTypeFilter,
-                        onClear = viewModel::clearFilters,
+                if (searchVisible) {
+                    item {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = {
+                                searchQuery = it
+                                viewModel.clearActionError()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            placeholder = { Text(strings.feedSearchPlaceholder) },
+                        )
+                    }
+                }
+
+                item {
+                    FeedActivityChips(
+                        selectedActivity = state.selectedActivityTypes.firstOrNull(),
+                        onSelect = { activity ->
+                            viewModel.toggleActivityTypeFilter(activity)
+                        },
                     )
                 }
-            }
 
-            item {
-                FeedTabs(
-                    selectedTab = FeedTab.entries[selectedTab],
-                    onSelect = { selectedTab = it.ordinal },
-                )
-            }
+                item {
+                    FeedTabs(
+                        selectedTab = FeedTab.entries[selectedTab],
+                        onSelect = { selectedTab = it.ordinal },
+                    )
+                }
+
+                item {
+                    AnimatedVisibility(
+                        visible = filterVisible,
+                        enter = expandVertically(),
+                        exit = shrinkVertically()
+                    ) {
+                        FeedPostTypeFilter(
+                            selectedPostTypes = state.selectedPostTypes,
+                            onPostTypeToggle = viewModel::togglePostTypeFilter,
+                            onClear = viewModel::clearFilters,
+                        )
+                    }
+                }
 
             state.loadError?.let { error ->
                 item {
@@ -247,6 +254,26 @@ fun FeedScreen(
             }
         }
     }
+
+        // FAB
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 20.dp, bottom = 100.dp)
+                .size(56.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(AllterraTheme.categorical.social.color)
+                .clickable { onCreatePost() },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Add,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+    }
 }
 
 @Composable
@@ -255,7 +282,6 @@ private fun FeedTopBar(
     onSearchClick: () -> Unit,
     onFilterClick: () -> Unit,
     onNotificationsClick: () -> Unit,
-    onCreatePost: () -> Unit,
 ) {
     val strings = appStrings()
 
@@ -295,21 +321,6 @@ private fun FeedTopBar(
                     )
                 }
             }
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(AllterraTheme.categorical.social.color)
-                    .clickable { onCreatePost() },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Add,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
         }
     }
 }
@@ -339,11 +350,45 @@ private fun FeedToolbarButton(
 }
 
 @Composable
-private fun FeedFilterSection(
+private fun FeedActivityChips(
+    selectedActivity: ActivityTypeUi?,
+    onSelect: (ActivityTypeUi) -> Unit,
+) {
+    val strings = appStrings()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        ActivityTypeUi.entries.forEach { activity ->
+            val selected = activity == selectedActivity
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(if (selected) AllterraTheme.categorical.social.color else AllterraTheme.colors.surface)
+                    .border(
+                        width = if (selected) 0.dp else 1.dp,
+                        color = AllterraTheme.colors.line2,
+                        shape = RoundedCornerShape(999.dp),
+                    )
+                    .clickable { onSelect(if (selected) return@clickable else activity) }
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+            ) {
+                Text(
+                    text = activity.label(strings),
+                    style = AllterraTheme.typography.smallStrong,
+                    color = if (selected) Color.White else AllterraTheme.colors.ink,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FeedPostTypeFilter(
     selectedPostTypes: Set<PostTypeUi>,
-    selectedActivityTypes: Set<ActivityTypeUi>,
     onPostTypeToggle: (PostTypeUi) -> Unit,
-    onActivityTypeToggle: (ActivityTypeUi) -> Unit,
     onClear: () -> Unit,
 ) {
     val strings = appStrings()
@@ -354,53 +399,34 @@ private fun FeedFilterSection(
             .background(AllterraTheme.colors.surface)
             .border(1.dp, AllterraTheme.colors.line, RoundedCornerShape(AllterraTheme.radius.lg))
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = strings.feedFilterTitle, style = AllterraTheme.typography.bodyStrong)
-            Text(
-                text = strings.feedFilterClear,
-                style = AllterraTheme.typography.small,
-                color = AllterraTheme.colors.terra,
-                modifier = Modifier.clickable { onClear() }
-            )
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(text = strings.postTypeLabel, style = AllterraTheme.typography.caption, color = AllterraTheme.colors.muted)
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                PostTypeUi.entries.forEach { type ->
-                    val selected = type in selectedPostTypes
-                    FilterChip(
-                        selected = selected,
-                        onClick = { onPostTypeToggle(type) },
-                        label = { Text(type.label(strings)) }
-                    )
-                }
+            Text(text = strings.postTypeLabel, style = AllterraTheme.typography.bodyStrong)
+            if (selectedPostTypes.isNotEmpty()) {
+                Text(
+                    text = strings.feedFilterClear,
+                    style = AllterraTheme.typography.small,
+                    color = AllterraTheme.colors.terra,
+                    modifier = Modifier.clickable { onClear() }
+                )
             }
         }
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(text = strings.postActivityLabel, style = AllterraTheme.typography.caption, color = AllterraTheme.colors.muted)
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ActivityTypeUi.entries.forEach { activity ->
-                    val selected = activity in selectedActivityTypes
-                    FilterChip(
-                        selected = selected,
-                        onClick = { onActivityTypeToggle(activity) },
-                        label = { Text(activity.label(strings)) }
-                    )
-                }
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            PostTypeUi.entries.forEach { type ->
+                val selected = type in selectedPostTypes
+                FilterChip(
+                    selected = selected,
+                    onClick = { onPostTypeToggle(type) },
+                    label = { Text(type.label(strings)) }
+                )
             }
         }
     }
@@ -584,6 +610,38 @@ private fun FeedPostCard(
                 )
             }
 
+            if (item.type == PostTypeUi.ROUTE) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    if (item.distanceKm != null) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "${"%.1f".format(item.distanceKm)} km",
+                                style = AllterraTheme.typography.smallStrong,
+                                color = AllterraTheme.colors.terra,
+                            )
+                        }
+                    }
+                    if (item.elevationGain != null) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "+${item.elevationGain}m",
+                                style = AllterraTheme.typography.smallStrong,
+                                color = AllterraTheme.colors.terra,
+                            )
+                        }
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -678,6 +736,14 @@ private fun FeedPostFallback(item: ActivityUiModel) {
             .padding(16.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
+        if (item.type == PostTypeUi.ROUTE) {
+            Icon(
+                imageVector = Icons.Outlined.Map,
+                contentDescription = null,
+                tint = AllterraTheme.colors.terra,
+                modifier = Modifier.size(48.dp),
+            )
+        }
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
                 text = item.title.ifBlank { item.author },

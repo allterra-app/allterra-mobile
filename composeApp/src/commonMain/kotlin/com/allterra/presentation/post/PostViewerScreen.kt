@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.allterra.presentation.common.model.ActivityUiModel
 import com.allterra.presentation.common.model.PostAudienceUi
+import com.allterra.presentation.common.model.PostTypeUi
 import com.allterra.presentation.common.model.handle
 import com.allterra.presentation.common.model.initials
 import com.allterra.presentation.localization.appStrings
@@ -68,14 +69,15 @@ fun PostViewerScreen(
     val pageCount = if (item.photoUris.isNotEmpty()) item.photoUris.size else 1
     val pagerState = rememberPagerState(pageCount = { pageCount })
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .background(AllterraTheme.colors.bg)
     ) {
-        // Top Bar
-        Row(
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top Bar
+            Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -113,10 +115,10 @@ fun PostViewerScreen(
             }
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
         ) {
             // Hero Section (Photos)
             Box(
@@ -234,6 +236,42 @@ fun PostViewerScreen(
                         }
                     }
                 }
+
+                if (item.type == PostTypeUi.ROUTE && (item.distanceKm != null || item.elevationGain != null)) {
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(20.dp),
+                    ) {
+                        item.distanceKm?.let { km ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "%.1f".format(km),
+                                    style = AllterraTheme.typography.displayM,
+                                    color = AllterraTheme.colors.terra,
+                                )
+                                Text(
+                                    text = "km",
+                                    style = AllterraTheme.typography.caption,
+                                    color = AllterraTheme.colors.muted,
+                                )
+                            }
+                        }
+                        item.elevationGain?.let { gain ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "+$gain",
+                                    style = AllterraTheme.typography.displayM,
+                                    color = AllterraTheme.colors.terra,
+                                )
+                                Text(
+                                    text = "m",
+                                    style = AllterraTheme.typography.caption,
+                                    color = AllterraTheme.colors.muted,
+                                )
+                            }
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -303,6 +341,49 @@ fun PostViewerScreen(
 
             Spacer(modifier = Modifier.height(80.dp))
         }
+    }
+
+    // Sticky comment composer
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .align(Alignment.BottomCenter)
+            .background(AllterraTheme.colors.bg),
+    ) {
+        HorizontalDivider(color = AllterraTheme.colors.line2, thickness = 1.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(AllterraTheme.radius.btn))
+                    .background(AllterraTheme.colors.surface2)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            ) {
+                Text(
+                    text = "Add a comment...",
+                    style = AllterraTheme.typography.body,
+                    color = AllterraTheme.colors.muted,
+                )
+            }
+            IconButton(
+                onClick = { /* open comment composer */ },
+                modifier = Modifier.size(40.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.ChatBubbleOutline,
+                    contentDescription = null,
+                    tint = AllterraTheme.categorical.social.color,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+    }
     }
 }
 

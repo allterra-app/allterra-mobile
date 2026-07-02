@@ -74,7 +74,7 @@ import com.allterra.presentation.trips.TripUiModel
 
 import androidx.compose.foundation.layout.PaddingValues
 
-const val MAX_POST_PHOTOS = 12
+const val MAX_POST_PHOTOS = 9
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -272,6 +272,13 @@ fun PostComposerScreen(
         }
 
         Spacer(modifier = Modifier.height(AllterraTheme.spacing.s5))
+
+        Text(
+            text = strings.locationLabel,
+            style = AllterraTheme.typography.caption,
+            color = AllterraTheme.colors.muted,
+        )
+        Spacer(modifier = Modifier.height(AllterraTheme.spacing.s2))
 
         AllterraInput(
             value = draft.title,
